@@ -1,0 +1,10 @@
+{
+  "name": "garagem",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Gestão de veículos: mídias, divulgação e financeiro",
+  "dependencies": {
+    "@vercel/functions": "^3.1.0"
+  }
+}
