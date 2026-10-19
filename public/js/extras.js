@@ -43,7 +43,7 @@ A.storiesM = async (el) => {
   const v = getV(el.dataset.id);
   const ms = midiasDe(v).filter((m) => m.story);
   toast('Preparando stories…', 20000);
-  const ok = await compartilhar({ files: await arquivosDe(ms), text: v.legenda || textoAnuncio(v, 'whatsapp'), title: nomeV(v) });
+  const ok = await compartilhar({ files: await arquivosDe(ms), text: v.legendaStory || v.legenda || textoAnuncio(v, 'whatsapp'), title: nomeV(v) });
   if (ok) { await marcarPost(v, 'Stories', false); toast('Legenda copiada ✓', 3000); }
 };
 A.togStory = async (el) => {

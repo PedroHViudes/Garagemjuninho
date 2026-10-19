@@ -58,7 +58,7 @@ function tabMidias(v, ms) {
       <button class="btn sm" data-a="selTodas">${n === ms.length ? 'Limpar seleção' : 'Selecionar todas'}</button>
       <span class="muted" style="flex:1">${n ? n + ' selecionada(s)' : 'Toque no círculo para escolher'}</span>
     </div>
-    ${ms.some((m) => m.story) ? `<button class="btn ig block mt" data-a="storiesM" data-id="${v.id}">${I.story} Enviar stories (${ms.filter((m) => m.story).length}) + legenda</button>` : ''}
+    ${ms.some((m) => m.story) ? `<button class="btn ig block mt" data-a="storiesM" data-id="${v.id}">${I.story} Enviar stories (${ms.filter((m) => m.story).length}) + legenda</button>${v.dicaStory ? `<p class="muted" style="margin:6px 0 0">💡 ${esc(v.dicaStory)}</p>` : ''}` : ''}
     <button class="btn wa block mt" data-a="shareM" data-id="${v.id}">${I.share} Compartilhar ${n ? n : 'todas as ' + ms.length} + texto do anúncio</button>
     <p class="muted center" style="margin:6px 0 0">Abre a lista de apps: WhatsApp, Instagram, Facebook… O texto já fica copiado — é só colar na legenda.</p>
     ` : `<p class="muted center mt">Adicione as fotos e vídeos deste ${v.tipo}. Ficam salvos no app, prontos para compartilhar.</p>`}

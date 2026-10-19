@@ -117,7 +117,7 @@ const S = {
 function normV(v) {
   const o = Object.assign({
     tipo: 'carro', marca: '', modelo: '', anoFab: '', anoMod: '', km: '', cor: '', combustivel: '', cambio: '',
-    placa: '', opcionais: '', descricao: '', legenda: '', legendaStory: '', status: 'disponivel', aceitaTroca: true, financia: true,
+    placa: '', opcionais: '', descricao: '', legenda: '', legendaStory: '', dicaStory: '', status: 'disponivel', aceitaTroca: true, financia: true,
     precoAnuncio: 0, precoMinimo: 0, despesas: [], fipe: null, linkAlbum: '', midiasCodigo: [], postagens: {},
     origem: 'compra', criado: hoje(), venda: null, capaId: null, ultimaDivulgacao: null,
   }, v || {});
@@ -199,10 +199,14 @@ async function carregar() {
 function urlM(m) { return (S.urls[m.id] ||= URL.createObjectURL(m.blob)); }
 function midiasDe(v) {
   const loc = (S.midias[v.id] || []).map((m) => ({ ...m, src: urlM(m), local: true }));
-  const cod = (v.midiasCodigo || []).filter(Boolean).map((p, i) => ({
-    id: 'cod:' + p, veiculoId: v.id, src: p.startsWith('http') || p.startsWith('/') ? p : '/' + p,
-    tipo: /\.(mp4|mov|webm|m4v)$/i.test(p) ? 'video' : 'foto', nome: p.split('/').pop(), codigo: true, ordem: -1000 + i,
-  }));
+  const cod = (v.midiasCodigo || []).filter(Boolean).map((p0, i) => {
+    const story = /#story$/i.test(p0) || /\/stor(y|ies)\//i.test(p0);
+    const p = p0.replace(/#story$/i, '');
+    return {
+      id: 'cod:' + p0, veiculoId: v.id, src: p.startsWith('http') || p.startsWith('/') ? p : '/' + p, story,
+      tipo: /\.(mp4|mov|webm|m4v)$/i.test(p) ? 'video' : 'foto', nome: p.split('/').pop(), codigo: true, ordem: -1000 + i,
+    };
+  });
   const peso = (m) => (m.story ? 2 : 0) + (m.tipo === 'video' ? 1 : 0);
   const all = [...cod, ...loc].sort((a, b) => peso(a) - peso(b) || (a.ordem || 0) - (b.ordem || 0));
   if (v.capaId) { const i = all.findIndex((m) => m.id === v.capaId); if (i > 0) all.unshift(all.splice(i, 1)[0]); }
