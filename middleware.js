@@ -8,7 +8,7 @@ import { next } from '@vercel/functions';
 
 export const config = {
   // protege tudo, menos o ícone/manifest (necessários p/ instalar o app)
-  matcher: ['/((?!icon\\.svg|icon-192\\.png|icon-512\\.png|manifest\\.webmanifest).*)'],
+  matcher: ['/((?!icon\\.svg|icon-192\\.png|icon-512\\.png|manifest\\.webmanifest|marca/logo-192\\.jpg).*)'],
 };
 
 const COOKIE = 'garagem_auth';
@@ -41,14 +41,14 @@ function paginaLogin(erro = false, status = 401) {
 *{box-sizing:border-box}body{margin:0;min-height:100dvh;display:grid;place-items:center;
 font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:#0f1115;color:#f3f4f6;padding:24px}
 .box{width:100%;max-width:360px;text-align:center}
-.logo{width:72px;height:72px;border-radius:20px;margin:0 auto 18px;display:block}
+.logo{width:96px;height:96px;border-radius:50%;margin:0 auto 18px;display:block;object-fit:cover}
 h1{font-size:22px;margin:0 0 6px}p{color:#9ca3af;margin:0 0 22px;font-size:14px}
 input{width:100%;font-size:18px;padding:15px 16px;border-radius:14px;border:1px solid #2a2f3a;background:#171a21;color:#fff;outline:none;text-align:center;letter-spacing:2px}
 input:focus{border-color:#f59e0b}
 button{margin-top:12px;width:100%;font-size:17px;font-weight:700;padding:15px;border:0;border-radius:14px;background:#f59e0b;color:#111;cursor:pointer}
 .err{color:#f87171;font-size:14px;margin-top:12px}
 </style></head><body><form class="box" method="POST" action="/entrar">
-<img class="logo" src="/icon.svg" alt="">
+<img class="logo" src="/marca/logo-192.jpg" alt="" onerror="this.src='/icon.svg'">
 <h1>Garagem</h1><p>Área restrita · digite sua senha</p>
 <input type="password" name="senha" autocomplete="current-password" placeholder="••••••" autofocus required>
 <button type="submit">Entrar</button>
@@ -100,5 +100,8 @@ export default async function middleware(request) {
 
   if (iguais(lerCookie(request, COOKIE), token)) return next();
 
+  if (url.pathname.startsWith('/api/')) {
+    return new Response(JSON.stringify({ erro: 'Sessão expirada: abra o app e digite a senha de novo' }), { status: 401, headers: { 'content-type': 'application/json' } });
+  }
   return paginaLogin(false);
 }

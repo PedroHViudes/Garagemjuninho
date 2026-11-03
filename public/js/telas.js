@@ -7,7 +7,7 @@
 rota(/^\/$/, () => {
   const r = resumo();
   const nome = S.cfg.vendedor || 'Pedro';
-  topo(`Olá, ${esc(nome)}`, { sub: esc(S.cfg.nomeLoja || 'Garagem'), direita: `<a class="icon-btn" href="#/ajustes" aria-label="Ajustes">${I.gear}</a>` });
+  topo(`Olá, ${esc(nome)}`, { logo: true, sub: esc(S.cfg.nomeLoja || 'Garagem'), direita: `<a class="icon-btn" href="#/ajustes" aria-label="Ajustes">${I.gear}</a>` });
 
   const alertas = [];
   const dA = num(S.cfg.diasAlerta) || 30, dP = num(S.cfg.diasSemPostar) || 5;
@@ -48,6 +48,8 @@ rota(/^\/$/, () => {
 
     <div class="sec-t">Atalhos</div>
     <div class="tool-grid">
+      <a class="tool" href="#/lote">${I.ia}<b>Cadastrar em lote</b><span>A IA lê as artes e cadastra vários</span></a>
+      <a class="tool" href="#/novo">${I.plus}<b>Novo com IA</b><span>Foto da arte preenche o cadastro</span></a>
       <a class="tool" data-a="escolherPlaca">${I.plate}<b>Consultar placa</b><span>Escolha o site ou app na hora</span></a>
       <a class="tool" href="#/ferramentas?fipe">${I.tag}<b>Tabela FIPE</b><span>Valor por marca/modelo/ano</span></a>
       <a class="tool" href="#/ferramentas?calc">${I.calc}<b>Calculadora</b><span>Estou ganhando ou perdendo?</span></a>
@@ -80,7 +82,7 @@ A.metaAds = () => abrir('https://adsmanager.facebook.com/');
 
 /* ---------------- LISTA ---------------- */
 rota(/^\/veiculos$/, () => {
-  topo('Veículos', { sub: `${S.veiculos.filter((v) => v.status !== 'vendido').length} no estoque`, direita: `<a class="icon-btn" href="#/novo" aria-label="Novo">${I.plus}</a>` });
+  topo('Veículos', { sub: `${S.veiculos.filter((v) => v.status !== 'vendido').length} no estoque`, direita: `<a class="icon-btn" href="#/lote" aria-label="Cadastro em lote" title="Cadastro em lote">${I.layers}</a><a class="icon-btn" href="#/novo" aria-label="Novo">${I.plus}</a>` });
   const f = S.filtro;
   tela(`
     <div class="search"><input class="i" id="q" type="search" placeholder="Buscar modelo, placa, cor…" value="${esc(f.q)}" autocomplete="off"></div>
@@ -117,6 +119,7 @@ rota(/^\/editar\/(.+)$/, (id) => formV(getV(id)), 'veiculos');
 
 function formV(v0) {
   const novo = !v0;
+  if (novo) S.iaArte = null;
   const v = normV(v0 ? JSON.parse(JSON.stringify(v0)) : { compra: { data: hoje() } });
   topo(novo ? 'Novo veículo' : 'Editar veículo', { voltar: novo ? '#/veiculos' : '#/v/' + v.id });
   const inp = (name, label, val, attrs = '') => `<label class="l">${label}<input class="i" name="${name}" value="${esc(val ?? '')}" ${attrs}></label>`;
@@ -124,6 +127,10 @@ function formV(v0) {
   const sel = (name, label, val, opts) => `<label class="l">${label}<select class="i" name="${name}">${opts.map((o) => `<option ${o === val ? 'selected' : ''}>${o}</option>`).join('')}</select></label>`;
   tela(`
   <form id="fv" class="f" autocomplete="off">
+    ${novo ? `<div class="ia-box">
+      <label class="btn pri block">${I.ia} Preencher com IA (foto da arte)<input type="file" accept="image/*" class="hide" id="iaArte"></label>
+      <div id="iaRes"><p class="muted center" style="margin:6px 0 0">Tire ou escolha a imagem com as informações do veículo — a IA preenche tudo e escreve a legenda. Vários de uma vez? <a href="#/lote" style="color:var(--acc)">Cadastro em lote</a></p></div>
+    </div>` : ''}
     <div class="seg" id="segTipo">
       <button type="button" class="${v.tipo === 'carro' ? 'on' : ''}" data-a="segTipo" data-k="carro">🚗 Carro</button>
       <button type="button" class="${v.tipo === 'moto' ? 'on' : ''}" data-a="segTipo" data-k="moto">🏍️ Moto</button>
@@ -169,7 +176,11 @@ function formV(v0) {
       midiasCodigo: g('midiasCodigo').split('\n').map((s) => s.trim()).filter(Boolean),
     });
     v.compra = { ...v.compra, valor: num(g('compra.valor')), data: g('compra.data') || v.compra.data, pagoCaixa: fd.has('compra.pagoCaixa') };
+    const dup = acharDuplicado(v, S.veiculos, v.id);
+    if (novo && dup && !confirm(`Atenção: ${dup.motivo}.\nCadastrar mesmo assim?`)) return;
+    if (novo) { const base = slug([v.marca, v.modelo, v.anoMod].join(' ')); if (base && !getV(base)) v.id = base; }
     await salvarV(v);
+    if (novo && S.iaArte) { await addMidias(v.id, [S.iaArte]); S.iaArte = null; }
     toast(novo ? 'Veículo cadastrado ✓' : 'Salvo ✓');
     if (novo) S.tabV = 'midias';
     location.hash = '#/v/' + v.id;

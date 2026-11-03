@@ -8,10 +8,13 @@
 //    quando quiser que o celular recarregue daqui.
 // =============================================================
 window.DADOS = {
-  versao: 2,
+  versao: 3,
 
   config: {
-    nomeLoja: 'Pedro Viudes Veículos',
+    nomeLoja: "Markinho's Veículos",
+    slogan: 'Revenda no particular • Não somos loja',
+    logo: 'marca/logo.jpg',          // aparece no app e no card de anúncio
+    hashtagsLocais: '#nortedoparana #carros43 #jacarezinho #jacarezinhopr',
     vendedor: 'Pedro',
     whatsapp: '43984881330',    // só números, com DDD
     cidade: 'Jacarezinho - PR',
@@ -26,6 +29,19 @@ window.DADOS = {
       'Status WhatsApp', 'Grupos WhatsApp', 'Marketplace', 'Grupos Facebook',
       'Instagram Feed', 'Instagram Reels', 'Stories', 'TikTok', 'OLX', 'Impulsionado Meta'
     ],
+
+    // Modelos de mensagem (dá pra criar/editar no app em Ajustes).
+    // Variáveis: {titulo} {ano} {km} {preco} {opcionais} {opcionais_linha} {descricao} {condicoes}
+    //            {cor} {combustivel} {cambio} {whatsapp} {cidade} {loja} {slogan} {hashtags} {emoji} {placa} {album}
+    // Linha cujas variáveis estão todas vazias (ex: "🛣️ {km}" sem km) some sozinha.
+    modelosMsg: [
+      { id: 'grupo-zap', nome: 'Grupo Zap', texto: '{emoji} *{titulo} {ano}*\n🛣️ {km}\n{opcionais}\n\n💰 *{preco}*\n🤝 {condicoes}\n📍 {cidade}\n📲 Chama no WhatsApp: {whatsapp}\n🏷️ {loja} · {slogan}' },
+      { id: 'status-curto', nome: 'Status curto', texto: '{emoji} {titulo} {ano}\n💰 {preco}\n🤝 {condicoes}\n📲 {whatsapp}' },
+      { id: 'marketplace', nome: 'Marketplace', texto: '{titulo} {ano} – {preco}\n\n• Km: {km}\n• Câmbio: {cambio}\n• Combustível: {combustivel}\n• Opcionais: {opcionais_linha}\n\n{descricao}\n\n{condicoes}\n{slogan}\nChama no privado ou no WhatsApp {whatsapp}' },
+    ],
+
+    // atualiza estes ajustes no celular quando chegar esta versão do código
+    _atualizar: { versao: 3, chaves: ['nomeLoja', 'slogan', 'logo', 'hashtagsLocais'] },
 
     // Seus grupos/páginas (toque no app = copia o texto e abre o grupo)
     grupos: [
@@ -581,6 +597,339 @@ window.DADOS = {
         "midias/volkswagen-saveiro-2004/reels_sem_audio.mp4"
       ],
       "criado": "2026-10-19"
+    },
+    {
+      "id": "fiat-palio-elx-2008",
+      "capaId": "cod:midias/fiat-palio-elx-2008/arte_anuncio.jpg",
+      "tipo": "carro",
+      "marca": "Fiat",
+      "modelo": "Palio ELX 1.4",
+      "anoFab": 2008,
+      "anoMod": 2008,
+      "km": "",
+      "cor": "Preto",
+      "combustivel": "Flex",
+      "cambio": "Manual",
+      "placa": "",
+      "opcionais": "Ar-condicionado, Direção hidráulica, Vidros elétricos, Trava elétrica, Alarme, Multimídia, Câmera de ré",
+      "descricao": "5 pneus novos. Carro todo revisado, é pegar e rodar.",
+      "status": "disponivel",
+      "aceitaTroca": false,
+      "financia": false,
+      "precoAnuncio": 33990,
+      "precoMinimo": 0,
+      "compra": {
+        "valor": 0,
+        "data": "2026-11-03",
+        "pagoCaixa": true
+      },
+      "despesas": [],
+      "fipe": null,
+      "linkAlbum": "",
+      "legenda": "🚗 FIAT PALIO ELX 1.4 FLEX 2008 – COMPLETO\n\nRevisado e com 5 pneus novos, é pegar e rodar 👇\n\n✅ Motor 1.4 Flex\n✅ Ar-condicionado\n✅ Direção hidráulica\n✅ Vidros elétricos\n✅ Trava elétrica\n✅ Alarme\n✅ Multimídia com câmera de ré\n🆕 5 pneus novos\n🔧 Carro todo revisado\n\n💰 R$ 33.990\n\n📲 Comenta \"PALIO\" que te chamo no Direct\nou fala direto no WhatsApp: (43) 98488-1330\n\n#fiatpalio #palioelx #palio2008 #palio14 #carrosavenda #carrousado #seminovos #vendadecarros #carroeconomico #carropopular #nortedoparana #carros43 #jacarezinho #jacarezinhopr",
+      "legendaStory": "🚗 PALIO ELX 1.4 2008 COMPLETO\n🆕 5 pneus novos • Todo revisado\n✅ Multimídia com câmera de ré\n\n💰 R$ 33.990\n\n👉 Responde este story com \"EU QUERO\" que te chamo\n📲 WhatsApp: (43) 98488-1330",
+      "dicaStory": "Sugestão de stickers: Link (WhatsApp) + Enquete \"Você compraria?\" (Sim / Me chama)",
+      "midiasCodigo": [
+        "midias/fiat-palio-elx-2008/arte_anuncio.jpg",
+        "midias/fiat-palio-elx-2008/reels.mp4#story"
+      ],
+      "criado": "2026-11-03"
+    },
+    {
+      "id": "volkswagen-voyage-2011",
+      "capaId": "cod:midias/volkswagen-voyage-2011/arte_anuncio.jpg",
+      "tipo": "carro",
+      "marca": "Volkswagen",
+      "modelo": "Voyage 1.0",
+      "anoFab": 2011,
+      "anoMod": 2011,
+      "km": "",
+      "cor": "Cinza",
+      "combustivel": "Flex",
+      "cambio": "Manual",
+      "placa": "",
+      "opcionais": "Alarme, Travas elétricas, 4 vidros elétricos, Farol de milha",
+      "descricao": "Sedan 4 portas. Pneus bons, documento em dia. Tabela R$ 29.800. Valor fixo.",
+      "status": "disponivel",
+      "aceitaTroca": false,
+      "financia": true,
+      "precoAnuncio": 25990,
+      "precoMinimo": 25990,
+      "compra": {
+        "valor": 0,
+        "data": "2026-11-03",
+        "pagoCaixa": true
+      },
+      "despesas": [],
+      "fipe": null,
+      "linkAlbum": "",
+      "legenda": "🚘 VW VOYAGE 1.0 FLEX 2011 – SEDAN 4 PORTAS\n\nAbaixo da tabela (R$ 29.800) 👇\n\n✅ Motor 1.0 Flex\n✅ Alarme\n✅ Travas elétricas\n✅ 4 vidros elétricos\n✅ Farol de milha\n✅ Pneus bons\n✅ Documento em dia\n\n💰 R$ 25.990 (valor fixo)\n🏦 Financiamos\n💳 Passamos no cartão (com juros da maquininha)\n\n📲 Comenta \"VOYAGE\" que te chamo no Direct\nou fala direto no WhatsApp: (43) 98488-1330\n\n#volkswagen #vwvoyage #voyage #voyage2011 #sedan #carrosavenda #carrousado #seminovos #vendadecarros #carroeconomico #nortedoparana #carros43 #jacarezinho #jacarezinhopr",
+      "legendaStory": "🚘 VOYAGE 1.0 2011\n✅ 4 vidros elétricos • Alarme • Doc em dia\n📉 Abaixo da tabela\n\n💰 R$ 25.990 • Financia e passa cartão\n\n👉 Responde este story com \"EU QUERO\" que te chamo\n📲 WhatsApp: (43) 98488-1330",
+      "dicaStory": "Sugestão de stickers: Link (WhatsApp) + Enquete \"Você compraria?\" (Sim / Me chama)",
+      "midiasCodigo": [
+        "midias/volkswagen-voyage-2011/arte_anuncio.jpg",
+        "midias/volkswagen-voyage-2011/reels.mp4#story"
+      ],
+      "criado": "2026-11-03"
+    },
+    {
+      "id": "byd-song-plus-premium-2026",
+      "capaId": "cod:midias/byd-song-plus-premium-2026/arte_anuncio.jpg",
+      "tipo": "carro",
+      "marca": "BYD",
+      "modelo": "Song Plus Premium",
+      "anoFab": 2025,
+      "anoMod": 2026,
+      "km": 19800,
+      "cor": "Branco",
+      "combustivel": "Híbrido",
+      "cambio": "Automático",
+      "placa": "",
+      "opcionais": "Híbrido plug-in 324 cv, Tração integral AWD, Teto solar panorâmico, Bancos de couro elétricos e ventilados, Central giratória + painel digital, Pacote ADAS completo",
+      "descricao": "0 a 100 km/h em 5,2 s, 690 km de autonomia. Garantia BYD: 6 anos do veículo e 8 anos da bateria.",
+      "status": "disponivel",
+      "aceitaTroca": false,
+      "financia": false,
+      "precoAnuncio": 249000,
+      "precoMinimo": 0,
+      "compra": {
+        "valor": 0,
+        "data": "2026-11-03",
+        "pagoCaixa": true
+      },
+      "despesas": [],
+      "fipe": null,
+      "linkAlbum": "",
+      "legenda": "⚡ BYD SONG PLUS PREMIUM 2025/2026 – HÍBRIDO PLUG-IN\n\nSUV de 324 cv com apenas 19.800 km 👇\n\n✅ 324 cv combinados\n✅ Tração integral AWD\n✅ 0 a 100 km/h em 5,2 s\n✅ Até 690 km de autonomia\n✅ Teto solar panorâmico\n✅ Bancos de couro elétricos e ventilados\n✅ Central giratória + painel digital\n✅ Pacote ADAS completo\n🛡️ Garantia BYD: 6 anos do veículo / 8 anos da bateria\n\n💰 R$ 249.000\n\n📲 Comenta \"BYD\" que te chamo no Direct\nou fala direto no WhatsApp: (43) 98488-1330\n\n#byd #bydsongplus #songplus #carrohibrido #hibridoplugin #suv #carrosavenda #seminovos #carroeletrico #nortedoparana #carros43 #jacarezinho #jacarezinhopr",
+      "legendaStory": "⚡ BYD SONG PLUS PREMIUM 2026\n✅ Híbrido plug-in 324 cv • AWD\n✅ 19.800 km • Garantia BYD\n\n💰 R$ 249.000\n\n👉 Responde este story com \"EU QUERO\" que te chamo\n📲 WhatsApp: (43) 98488-1330",
+      "dicaStory": "Sugestão de stickers: Link (WhatsApp) + Enquete \"Você compraria?\" (Sim / Me chama)",
+      "midiasCodigo": [
+        "midias/byd-song-plus-premium-2026/arte_anuncio.jpg",
+        "midias/byd-song-plus-premium-2026/reels.mp4#story"
+      ],
+      "criado": "2026-11-03"
+    },
+    {
+      "id": "volkswagen-golf-sr-2000",
+      "capaId": "cod:midias/volkswagen-golf-sr-2000/arte_anuncio.jpg",
+      "tipo": "carro",
+      "marca": "Volkswagen",
+      "modelo": "Golf 1.6 SR",
+      "anoFab": 2000,
+      "anoMod": 2000,
+      "km": "",
+      "cor": "Verde",
+      "combustivel": "Gasolina",
+      "cambio": "Manual",
+      "placa": "",
+      "opcionais": "Direção hidráulica, Ar-condicionado, Trava elétrica, Vidros elétricos, Rodas aro 17, Suspensão de rosca, Insulfilm novo",
+      "descricao": "Abaixo da tabela. Só venda (não pego troca). Vai sem o som.",
+      "status": "disponivel",
+      "aceitaTroca": false,
+      "financia": false,
+      "precoAnuncio": 19900,
+      "precoMinimo": 0,
+      "compra": {
+        "valor": 0,
+        "data": "2026-11-03",
+        "pagoCaixa": true
+      },
+      "despesas": [],
+      "fipe": null,
+      "linkAlbum": "",
+      "legenda": "🚗 VW GOLF 1.6 SR 2000 – ABAIXO DA TABELA\n\nRebaixado na rosca e com rodas aro 17 👇\n\n✅ Motor 1.6 gasolina\n✅ Direção hidráulica\n✅ Ar-condicionado\n✅ Trava elétrica\n✅ Vidros elétricos\n✅ Suspensão de rosca\n✅ Rodas aro 17\n🆕 Insulfilm novo\n\nℹ️ Vai sem o som.\n\n💰 R$ 19.900\n🚫 Só venda, não pego troca\n\n📲 Comenta \"GOLF\" que te chamo no Direct\nou fala direto no WhatsApp: (43) 98488-1330\n\n#vwgolf #golf #golfsr #golf2000 #golfrebaixado #carrosavenda #carrousado #vendadecarros #nortedoparana #carros43 #jacarezinho #jacarezinhopr",
+      "legendaStory": "🚗 GOLF 1.6 SR 2000\n✅ Suspensão de rosca • Aro 17 • Ar\n📉 Abaixo da tabela\n\n💰 R$ 19.900 • Só venda\n\n👉 Responde este story com \"EU QUERO\" que te chamo\n📲 WhatsApp: (43) 98488-1330",
+      "dicaStory": "Sugestão de stickers: Link (WhatsApp) + Enquete \"Você compraria?\" (Sim / Me chama)",
+      "midiasCodigo": [
+        "midias/volkswagen-golf-sr-2000/arte_anuncio.jpg",
+        "midias/volkswagen-golf-sr-2000/reels.mp4#story"
+      ],
+      "criado": "2026-11-03"
+    },
+    {
+      "id": "fiat-mobi-like-2017",
+      "capaId": "cod:midias/fiat-mobi-like-2017/arte_anuncio.jpg",
+      "tipo": "carro",
+      "marca": "Fiat",
+      "modelo": "Mobi Like 1.0",
+      "anoFab": 2017,
+      "anoMod": 2017,
+      "km": "",
+      "cor": "Branco",
+      "combustivel": "Flex",
+      "cambio": "Manual",
+      "placa": "",
+      "opcionais": "Ar-condicionado, Direção hidráulica, Vidros elétricos, Trava, Alarme, Airbag duplo",
+      "descricao": "Pneus novos, baixa quilometragem. Sem sinistro, sem leilão. Troca por menor valor.",
+      "status": "disponivel",
+      "aceitaTroca": true,
+      "financia": true,
+      "precoAnuncio": 41990,
+      "precoMinimo": 0,
+      "compra": {
+        "valor": 0,
+        "data": "2026-11-03",
+        "pagoCaixa": true
+      },
+      "despesas": [],
+      "fipe": null,
+      "linkAlbum": "",
+      "legenda": "🚗 FIAT MOBI LIKE 1.0 FLEX 2017\n\nEconômico, completo e com baixa quilometragem 👇\n\n✅ Motor 1.0 Flex\n✅ Ar-condicionado\n✅ Direção hidráulica\n✅ Vidros elétricos\n✅ Trava\n✅ Alarme\n✅ Airbag duplo\n🆕 Pneus novos\n\n🛡️ PROCEDÊNCIA:\n✔️ Sem sinistro\n✔️ Sem leilão\n\n💰 R$ 41.990\n🏦 Financiamento e cartão\n🔄 Troca por menor valor\n\n📲 Comenta \"MOBI\" que te chamo no Direct\nou fala direto no WhatsApp: (43) 98488-1330\n\n#fiatmobi #mobi #mobilike #mobi2017 #carrosavenda #carrousado #seminovos #vendadecarros #carroeconomico #primeirocarro #semleilao #nortedoparana #carros43 #jacarezinho #jacarezinhopr",
+      "legendaStory": "🚗 MOBI LIKE 1.0 2017\n✅ Completo • Airbag duplo • Pneus novos\n✅ Sem sinistro • Sem leilão\n\n💰 R$ 41.990 • Financia e pega troca\n\n👉 Responde este story com \"EU QUERO\" que te chamo\n📲 WhatsApp: (43) 98488-1330",
+      "dicaStory": "Sugestão de stickers: Link (WhatsApp) + Enquete \"Você compraria?\" (Sim / Me chama)",
+      "midiasCodigo": [
+        "midias/fiat-mobi-like-2017/arte_anuncio.jpg",
+        "midias/fiat-mobi-like-2017/reels.mp4#story"
+      ],
+      "criado": "2026-11-03"
+    },
+    {
+      "id": "honda-cg-160-start-2024",
+      "capaId": "cod:midias/honda-cg-160-start-2024/arte_anuncio.jpg",
+      "tipo": "moto",
+      "marca": "Honda",
+      "modelo": "CG 160 Start",
+      "anoFab": 2024,
+      "anoMod": 2024,
+      "km": 4000,
+      "cor": "Prata",
+      "combustivel": "",
+      "cambio": "",
+      "placa": "",
+      "opcionais": "Pneus novos, Manual, Chave reserva",
+      "descricao": "Único dono, apenas 4 mil km. Laudos do Inmetro e nota fiscal de fábrica.\n⚠️ Consta média monta.",
+      "status": "disponivel",
+      "aceitaTroca": false,
+      "financia": false,
+      "precoAnuncio": 13990,
+      "precoMinimo": 0,
+      "compra": {
+        "valor": 0,
+        "data": "2026-11-03",
+        "pagoCaixa": true
+      },
+      "despesas": [],
+      "fipe": null,
+      "linkAlbum": "",
+      "legenda": "🏍️ HONDA CG 160 START 2024 – ÚNICO DONO\n\nApenas 4 mil km rodados 👇\n\n✅ Único dono\n✅ Apenas 4.000 km\n✅ Laudos do Inmetro\n✅ Nota fiscal de fábrica\n✅ Manual e chave reserva\n🆕 Pneus novos\n\n⚠️ TRANSPARÊNCIA TOTAL:\n❌ Consta média monta\nÉ por isso que ela está nesse preço. A gente prefere falar logo de cara. Antes de fechar, vale fazer a cotação do seguro.\n\n💰 R$ 13.990\n\n📲 Comenta \"START\" que te chamo no Direct\nou fala direto no WhatsApp: (43) 98488-1330\n\n#hondacg #cgstart #cg160 #cgstart160 #honda #motoavenda #motosavenda #motousada #unicodono #motoeconomica #nortedoparana #motos43 #jacarezinho #jacarezinhopr",
+      "legendaStory": "🏍️ CG 160 START 2024\n✅ Único dono • 4 mil km • NF de fábrica\n⚠️ Consta média monta (por isso o preço)\n\n💰 R$ 13.990\n\n👉 Responde este story com \"EU QUERO\" que te chamo\n📲 WhatsApp: (43) 98488-1330",
+      "dicaStory": "Sugestão de stickers: Link (WhatsApp) + Enquete \"Você compraria?\" (Sim / Me chama)",
+      "midiasCodigo": [
+        "midias/honda-cg-160-start-2024/arte_anuncio.jpg",
+        "midias/honda-cg-160-start-2024/reels.mp4#story"
+      ],
+      "criado": "2026-11-03"
+    },
+    {
+      "id": "honda-biz-125-ks-2007",
+      "capaId": "cod:midias/honda-biz-125-ks-2007/arte_anuncio.jpg",
+      "tipo": "moto",
+      "marca": "Honda",
+      "modelo": "Biz 125 KS",
+      "anoFab": 2007,
+      "anoMod": 2007,
+      "km": "",
+      "cor": "Amarelo",
+      "combustivel": "Gasolina",
+      "cambio": "Semi-automático",
+      "placa": "",
+      "opcionais": "Partida no pedal, Rodas de liga leve, Câmbio semi-automático, Porta-capacete espaçoso",
+      "descricao": "2 pneus novos, óleo recém-trocado, farol novo, piscas novos, lona de freio nova. Moto revisada. Pix ou cartão de crédito. Não faço na promissória, não abaixo o valor, não troco.",
+      "status": "disponivel",
+      "aceitaTroca": false,
+      "financia": false,
+      "precoAnuncio": 7500,
+      "precoMinimo": 7500,
+      "compra": {
+        "valor": 0,
+        "data": "2026-11-03",
+        "pagoCaixa": true
+      },
+      "despesas": [],
+      "fipe": null,
+      "linkAlbum": "",
+      "legenda": "🏍️ HONDA BIZ 125 KS 2007 – REVISADA\n\nMoto econômica pro dia a dia 👇\n\n✅ Partida no pedal\n✅ Câmbio semi-automático\n✅ Rodas de liga leve\n✅ Porta-capacete espaçoso\n🆕 2 pneus novos\n🆕 Óleo recém-trocado\n🆕 Farol e piscas novos\n🆕 Lona de freio nova\n🔧 Moto revisada\n\n💰 R$ 7.500\n💠 Pix ou 💳 cartão de crédito\n🔒 Não abaixo o valor • Não troco • Não faço na promissória\n\n📲 Comenta \"BIZ\" que te chamo no Direct\nou fala direto no WhatsApp: (43) 98488-1330\n\n#hondabiz #biz125 #biz #biz2007 #honda #motoavenda #motosavenda #motousada #motoeconomica #nortedoparana #motos43 #jacarezinho #jacarezinhopr",
+      "legendaStory": "🏍️ BIZ 125 KS 2007\n✅ Revisada • Pneus, óleo e farol novos\n\n💰 R$ 7.500 • Pix ou cartão\n\n👉 Responde este story com \"EU QUERO\" que te chamo\n📲 WhatsApp: (43) 98488-1330",
+      "dicaStory": "Sugestão de stickers: Link (WhatsApp) + Enquete \"Você compraria?\" (Sim / Me chama)",
+      "midiasCodigo": [
+        "midias/honda-biz-125-ks-2007/arte_anuncio.jpg",
+        "midias/honda-biz-125-ks-2007/reels.mp4#story"
+      ],
+      "criado": "2026-11-03"
+    },
+    {
+      "id": "chevrolet-montana-sport-2005",
+      "capaId": "cod:midias/chevrolet-montana-sport-2005/arte_anuncio.jpg",
+      "tipo": "carro",
+      "marca": "Chevrolet",
+      "modelo": "Montana Sport 1.8 (preparada)",
+      "anoFab": 2005,
+      "anoMod": 2005,
+      "km": "",
+      "cor": "Vermelho",
+      "combustivel": "Flex",
+      "cambio": "Manual",
+      "placa": "",
+      "opcionais": "Pistões forjados AFP, Bielas Powertech, Injeção FT450, Intake esportivo, Escape inox 2,5\", Abafador NOX 3,5\", Freio a disco nas 4 rodas, Rodas aro 17, Coletor 4x1, Polia Unique Billet, Bobinas GM Onix, Tampa Strong",
+      "descricao": "Picape preparada.",
+      "status": "disponivel",
+      "aceitaTroca": false,
+      "financia": false,
+      "precoAnuncio": 44990,
+      "precoMinimo": 0,
+      "compra": {
+        "valor": 0,
+        "data": "2026-11-03",
+        "pagoCaixa": true
+      },
+      "despesas": [],
+      "fipe": null,
+      "linkAlbum": "",
+      "legenda": "🛻 CHEVROLET MONTANA SPORT 1.8 FLEX 2005 – PREPARADA\n\nPra quem curte picape forte 🔥\n\n⚙️ Pistões forjados AFP\n⚙️ Bielas Powertech\n⚙️ Injeção FT450\n⚙️ Intake esportivo\n⚙️ Coletor 4x1\n⚙️ Escape inox 2,5\" + abafador NOX 3,5\"\n⚙️ Polia Unique Billet • Bobinas GM Onix • Tampa Strong\n✅ Freio a disco nas 4 rodas\n✅ Rodas aro 17\n\n💰 R$ 44.990\n\n📲 Comenta \"MONTANA\" que te chamo no Direct\nou fala direto no WhatsApp: (43) 98488-1330\n\n#montana #montanasport #chevroletmontana #picapepreparada #carropreparado #ft450 #picape #carrosavenda #nortedoparana #carros43 #jacarezinho #jacarezinhopr",
+      "legendaStory": "🛻 MONTANA SPORT 1.8 2005 PREPARADA\n⚙️ Forjada • FT450 • Freio a disco nas 4\n\n💰 R$ 44.990\n\n👉 Responde este story com \"EU QUERO\" que te chamo\n📲 WhatsApp: (43) 98488-1330",
+      "dicaStory": "Sugestão de stickers: Link (WhatsApp) + Enquete \"Você compraria?\" (Sim / Me chama)",
+      "midiasCodigo": [
+        "midias/chevrolet-montana-sport-2005/arte_anuncio.jpg",
+        "midias/chevrolet-montana-sport-2005/reels.mp4#story"
+      ],
+      "criado": "2026-11-03"
+    },
+    {
+      "id": "toyota-corolla-fielder-2005",
+      "capaId": "cod:midias/toyota-corolla-fielder-2005/arte_anuncio.jpg",
+      "tipo": "carro",
+      "marca": "Toyota",
+      "modelo": "Corolla Fielder 1.8 XEi",
+      "anoFab": 2005,
+      "anoMod": 2005,
+      "km": "",
+      "cor": "Preto",
+      "combustivel": "Gasolina",
+      "cambio": "Automático",
+      "placa": "",
+      "opcionais": "Automática, Ar-condicionado, Direção hidráulica, Vidros elétricos, Travas elétricas, Alarme, Bancos de couro, Som original, Rodas de liga leve, Farol de milha, Rabicho",
+      "descricao": "Veículo revisado, pneus bons. Abaixo da tabela FIPE.",
+      "status": "disponivel",
+      "aceitaTroca": false,
+      "financia": false,
+      "precoAnuncio": 33900,
+      "precoMinimo": 0,
+      "compra": {
+        "valor": 0,
+        "data": "2026-11-03",
+        "pagoCaixa": true
+      },
+      "despesas": [],
+      "fipe": null,
+      "linkAlbum": "",
+      "legenda": "🚙 TOYOTA COROLLA FIELDER 1.8 XEi 2005 – AUTOMÁTICA\n\nEspaço de perua com a confiança Toyota 👇\n\n✅ Câmbio automático\n✅ Ar-condicionado\n✅ Direção hidráulica\n✅ Vidros e travas elétricas\n✅ Alarme\n✅ Bancos de couro\n✅ Som original\n✅ Rodas de liga leve\n✅ Farol de milha\n✅ Rabicho\n🔧 Veículo revisado • Pneus bons\n📉 Abaixo da tabela FIPE\n\n💰 R$ 33.900\n\n📲 Comenta \"FIELDER\" que te chamo no Direct\nou fala direto no WhatsApp: (43) 98488-1330\n\n#toyota #corollafielder #fielder #corolla #carroautomatico #perua #carrosavenda #carrousado #seminovos #nortedoparana #carros43 #jacarezinho #jacarezinhopr",
+      "legendaStory": "🚙 COROLLA FIELDER XEi 2005\n✅ Automática • Couro • Revisada\n📉 Abaixo da FIPE\n\n💰 R$ 33.900\n\n👉 Responde este story com \"EU QUERO\" que te chamo\n📲 WhatsApp: (43) 98488-1330",
+      "dicaStory": "Sugestão de stickers: Link (WhatsApp) + Enquete \"Você compraria?\" (Sim / Me chama)",
+      "midiasCodigo": [
+        "midias/toyota-corolla-fielder-2005/arte_anuncio.jpg",
+        "midias/toyota-corolla-fielder-2005/reels.mp4#story"
+      ],
+      "criado": "2026-11-03"
     }
   ],
 

@@ -8,8 +8,9 @@ Grátis na Vercel, protegido por senha.
 2. Envie todos os arquivos desta pasta (botão *Add file → Upload files*; dá pelo celular ou PC).
 3. Entre em **vercel.com** com a conta do GitHub → *Add New → Project* → escolha `garagem` → **Deploy**.
 4. Na Vercel: *Settings → Environment Variables* → crie **`SENHA_APP`** com a sua senha → salve.
-5. *Deployments* → nos 3 pontinhos do último → **Redeploy**.
-6. Abra o link no celular, digite a senha e use *Adicionar à tela inicial* para virar app.
+5. (IA) Crie também **`GEMINI_API_KEY`** com a chave do Google Gemini (grátis em aistudio.google.com). Opcional: `GEMINI_MODEL` (padrão `gemini-2.5-flash`).
+6. *Deployments* → nos 3 pontinhos do último → **Redeploy**.
+7. Abra o link no celular, digite a senha e use *Adicionar à tela inicial* para virar app.
 
 A senha fica só na Vercel (não aparece no código). Sem ela ninguém vê nada, nem o código.
 
@@ -39,3 +40,18 @@ pacote.zip
       └─ legenda.txt            ← legenda do story
 ```
 Se o veículo já existe (mesmo nome/placa) as mídias são somadas a ele; se não, ele é criado.
+
+## IA (Google Gemini)
+A chave fica só na Vercel (`GEMINI_API_KEY`). A função `api/ia.js` roda no servidor e só responde a quem já entrou com a senha.
+- **Novo veículo → Preencher com IA**: tire/escolha a foto da arte; a IA preenche marca, modelo, ano, km, preço, opcionais, condições e já escreve a legenda e o story. A arte vira foto do veículo.
+- **Cadastro em lote** (Veículos → ícone de camadas, ou Início → Cadastrar em lote): escolha várias artes de uma vez. A IA lê 2 por vez; duplicados (mesma placa, ou mesma marca + modelo + ano) ficam **desmarcados**. Confira, anexe os vídeos e toque em *Cadastrar*.
+- **Divulgar → Criar texto com IA**: escolha o canal (Instagram, WhatsApp, Story, Facebook, OLX, TikTok) e o tom; salve como “Minha” legenda ou de story.
+- Se aparecer “Limite do Gemini atingido”, espere 1 minuto (cota gratuita).
+
+## Mensagens de compartilhamento (modelos próprios)
+*Ajustes → Mensagens de compartilhamento*: crie quantos modelos quiser com variáveis
+`{titulo} {ano} {km} {preco} {opcionais} {opcionais_linha} {descricao} {condicoes} {cor} {combustivel} {cambio} {whatsapp} {cidade} {loja} {slogan} {hashtags} {emoji} {placa} {album}`.
+Linha cujas variáveis estão todas vazias some sozinha (ex.: "🛣️ {km}" quando não tem km). Os modelos aparecem como botões na aba *Divulgar* de cada veículo.
+
+## Atualizações do código sem perder nada
+Quando a `versao` do `dados.js` aumenta, o app **junta** os veículos novos do código com os do celular (não apaga nada e não duplica: pula o que já existir com a mesma placa ou marca+modelo+ano).

@@ -110,6 +110,11 @@ A.delM = async (el) => { if (!confirm('Apagar esta mídia do app?')) return; awa
 
 /* ---------------- TEXTOS DE ANÚNCIO ---------------- */
 function textoAnuncio(v, modelo = 'whatsapp') {
+  if (String(modelo).startsWith('m:')) {
+    const t = (S.cfg.modelosMsg || []).find((x) => 'm:' + x.id === modelo);
+    if (t) return aplicarModelo(t.texto, v);
+    modelo = 'whatsapp';
+  }
   if (modelo === 'propria' && v.legenda) return v.legenda;
   if (modelo === 'story' && (v.legendaStory || v.legenda)) return v.legendaStory || v.legenda;
   if (modelo === 'propria' || modelo === 'story') modelo = 'whatsapp';
@@ -132,6 +137,7 @@ function textoAnuncio(v, modelo = 'whatsapp') {
     extras.length && `🤝 ${extras.join(' • ')}`,
     c.cidade && `📍 ${c.cidade}`,
     zap && `📲 Chama no WhatsApp: ${zap}`,
+    c.slogan && `🏷️ ${c.nomeLoja ? c.nomeLoja + ' · ' : ''}${c.slogan}`,
   ]);
   if (modelo === 'instagram') {
     const tags = [c.hashtags || '', '#' + slug(v.marca).replace(/-/g, ''), '#' + slug(String(v.modelo).split(' ')[0]).replace(/-/g, ''), moto ? '#motos' : '#carros'].join(' ');
@@ -167,6 +173,7 @@ function textoAnuncio(v, modelo = 'whatsapp') {
     extras.length && extras.join(' / '),
     c.cidade && `Local: ${c.cidade}`,
     zap ? `Chama no privado ou no WhatsApp ${zap}` : 'Chama no privado!',
+    c.slogan && c.slogan,
   ]);
   // OLX / Webmotors
   return L([
@@ -193,11 +200,18 @@ function tabDivulgar(v) {
       <div class="seg mb">
         ${[...(v.legenda ? [['propria', 'Minha']] : []), ...(v.legendaStory ? [['story', 'Story']] : []), ['whatsapp', 'Zap'], ['instagram', 'Insta'], ['facebook', 'Face'], ['olx', 'OLX']].map(([k, t]) => `<button class="${S.modelo === k ? 'on' : ''}" data-a="modelo" data-k="${k}">${t}</button>`).join('')}
       </div>
+      ${(S.cfg.modelosMsg || []).length ? `<div class="chips" style="flex-wrap:wrap">${S.cfg.modelosMsg.map((t) => `<button class="chip ${S.modelo === 'm:' + t.id ? 'on' : ''}" data-a="modelo" data-k="m:${esc(t.id)}">${esc(t.nome)}</button>`).join('')}<a class="chip" href="#/ajustes?msg">${I.plus} modelo</a></div>` : ''}
       <textarea class="i adtext" id="adtext" rows="9">${esc(textoAnuncio(v, S.modelo))}</textarea>
       <div class="bgrid mt">
         <button class="btn" data-a="copiarAd">${I.copy} Copiar texto</button>
         <button class="btn pri" data-a="shareAd" data-id="${v.id}">${I.share} Fotos + texto</button>
       </div>
+      <div class="bgrid three mt">
+        <button class="btn sm" data-a="salvarAd" data-k="legenda" data-id="${v.id}">Salvar como “Minha”</button>
+        <button class="btn sm" data-a="salvarAd" data-k="legendaStory" data-id="${v.id}">Salvar como Story</button>
+        <button class="btn sm" data-a="salvarAdModelo">Virar modelo</button>
+      </div>
+      <button class="btn block mt ia-btn" data-a="iaTexto" data-id="${v.id}">${I.ia} Criar texto com IA (canal e tom)</button>
     </div>
 
     <div class="card">
@@ -233,7 +247,21 @@ function tabDivulgar(v) {
   `;
 }
 const adAtual = () => $('#adtext')?.value || '';
-A.modelo = (el) => { S.modelo = el.dataset.k; render(true); };
+A.modelo = async (el) => { S.modelo = el.dataset.k; S.cfg.modeloPadrao = S.modelo; await salvarCfg(); render(true); };
+A.salvarAd = async (el) => {
+  const v = getV(el.dataset.id); const t = adAtual().trim(); if (!t) return toast('Texto vazio');
+  v[el.dataset.k] = t; await salvarV(v); S.modelo = el.dataset.k === 'legenda' ? 'propria' : 'story';
+  toast(el.dataset.k === 'legenda' ? 'Salvo como sua legenda ✓' : 'Salvo como legenda de story ✓'); render(true);
+};
+A.salvarAdModelo = async () => {
+  const v = getV(S.selVid); let t = adAtual();
+  // troca os dados deste veículo por variáveis, para o modelo servir para todos
+  const m = varsDe(v);
+  for (const k of ['preco', 'km', 'titulo', 'ano', 'whatsapp', 'cidade', 'slogan', 'loja']) if (m[k] && m[k].length > 2) t = t.split(m[k]).join('{' + k + '}');
+  const nome = prompt('Nome do modelo (aparece como botão):', 'Meu modelo'); if (!nome) return;
+  const id = uid(); S.cfg.modelosMsg = [...(S.cfg.modelosMsg || []), { id, nome: nome.trim(), texto: t }];
+  S.modelo = 'm:' + id; S.cfg.modeloPadrao = S.modelo; await salvarCfg(); toast('Modelo criado ✓ — edite em Ajustes'); render(true);
+};
 A.copiarAd = () => copiar(adAtual());
 A.shareAd = async (el) => {
   const v = getV(el.dataset.id);
@@ -465,7 +493,9 @@ async function gerarCard(v, story) {
   const g0 = x.createLinearGradient(0, 0, 0, H); g0.addColorStop(0, '#1f2430'); g0.addColorStop(1, '#0b0d11');
   x.fillStyle = g0; x.fillRect(0, 0, W, H);
   // foto
-  const foto = midiasDe(v).find((m) => m.tipo === 'foto');
+  // prefere uma foto de verdade; a arte do anúncio só se não tiver outra
+  const fotos = midiasDe(v).filter((m) => m.tipo === 'foto');
+  const foto = fotos.find((m) => !/arte|card|feed|story/i.test(m.nome || '')) || fotos[0];
   const areaH = story ? 1250 : 900;
   if (foto) {
     try {
@@ -497,6 +527,20 @@ async function gerarCard(v, story) {
   y += 45;
   let px = pad;
   [v.aceitaTroca && 'ACEITO TROCA', v.financia && 'FINANCIO', v.cor && v.cor.toUpperCase()].filter(Boolean).forEach((t) => { px += pill(t, px, y, 'rgba(255,255,255,.12)', '#fff') + 14; });
+  // marca (logo + slogan)
+  if (S.cfg.logo) {
+    try {
+      const lg = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = '/' + S.cfg.logo; });
+      const ls = story ? 190 : 160, lx = W - pad - ls, ly = story ? 90 : 40;
+      x.save(); x.beginPath(); x.arc(lx + ls / 2, ly + ls / 2, ls / 2, 0, Math.PI * 2); x.closePath(); x.clip(); x.drawImage(lg, lx, ly, ls, ls); x.restore();
+    } catch {}
+  }
+  if (S.cfg.slogan) {
+    const sy = story ? 200 : 136;
+    x.font = '800 28px system-ui, sans-serif'; const tw = x.measureText(S.cfg.slogan.toUpperCase()).width;
+    x.fillStyle = '#dc2626'; rr(x, pad, sy, tw + 40, 52, 26); x.fill();
+    x.fillStyle = '#fff'; x.fillText(S.cfg.slogan.toUpperCase(), pad + 20, sy + 36);
+  }
   // rodapé
   const fy = H - (story ? 170 : 90);
   x.fillStyle = '#fff'; x.font = '700 44px system-ui, sans-serif';

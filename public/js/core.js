@@ -111,7 +111,7 @@ const S = {
   cfg: {}, veiculos: [], lanc: [], midias: {}, urls: {},
   filtro: { q: '', st: 'avenda', tipo: 'todos' },
   sel: new Set(), selVid: null, tabV: 'midias', modelo: 'whatsapp', caixaMes: 'tudo',
-  rota: '', fipeCache: {},
+  rota: '', fipeCache: {}, lote: [],
 };
 
 function normV(v) {
@@ -183,6 +183,57 @@ async function importarDoCodigo() {
   for (const l of D.lancamentos || []) await DB.put('lancamentos', Object.assign({ id: uid() }, l));
   await DB.put('kv', D.config || {}, 'config');
   await DB.put('kv', D.versao || 1, 'versao');
+}
+
+/* junta dados novos do código sem apagar o que está no celular */
+async function mesclarDoCodigo(vLocal) {
+  const locais = ((await DB.all('veiculos')) || []).map(normV);
+  const ids = new Set(locais.map((v) => v.id));
+  let novos = 0; const pulados = [];
+  for (const v0 of D.veiculos || []) {
+    const v = normV(v0);
+    if (ids.has(v.id)) {
+      const l = locais.find((x) => x.id === v.id);
+      const m = [...new Set([...(l.midiasCodigo || []), ...(v.midiasCodigo || [])])];
+      if (m.length !== (l.midiasCodigo || []).length) { l.midiasCodigo = m; await DB.put('veiculos', l); }
+      continue;
+    }
+    const dup = acharDuplicado(v, locais);
+    if (dup) { pulados.push(nomeV(v)); continue; }
+    await DB.put('veiculos', v); locais.push(v); ids.add(v.id); novos++;
+  }
+  const idsL = new Set(((await DB.all('lancamentos')) || []).map((l) => l.id));
+  for (const l of D.lancamentos || []) if (l.id && !idsL.has(l.id)) await DB.put('lancamentos', l);
+  const cfgL = (await DB.get('kv', 'config')) || {}, cfgC = D.config || {};
+  const forcar = cfgC._atualizar && (vLocal || 0) < (cfgC._atualizar.versao || 0) ? cfgC._atualizar.chaves || [] : [];
+  for (const k of Object.keys(cfgC)) if (k !== '_atualizar' && (!(k in cfgL) || forcar.includes(k))) cfgL[k] = cfgC[k];
+  await DB.put('kv', cfgL, 'config');
+  await DB.put('kv', D.versao || 1, 'versao');
+  return { novos, pulados };
+}
+
+/* ---------- duplicidade ---------- */
+const palavrasModelo = (m) => slug(m).split('-').filter((t) => /[a-z]/.test(t));
+function mesmoModelo(a, b) {
+  const ta = palavrasModelo(a), tb = palavrasModelo(b);
+  if (!ta.length || !tb.length || ta[0] !== tb[0]) return false;
+  // motos e nomes de família (CG Titan x CG Start, Corolla x Corolla Fielder): compara a 2ª palavra se as duas tiverem
+  if (['cg', 'cb', 'xre', 'nxr', 'ybr', 'fz', 'xtz', 'corolla'].includes(ta[0]) && ta[1] && tb[1]) {
+    const v2 = ['xei', 'gli', 'xli', 'altis', 'fan', 'es', 'esd', 'ks', 'mix'];
+    if (!v2.includes(ta[1]) && !v2.includes(tb[1])) return ta[1] === tb[1];
+  }
+  return true;
+}
+// procura veículo parecido já cadastrado: mesma placa, ou mesma marca+modelo+ano
+function acharDuplicado(d, lista = S.veiculos, ignorarId = null) {
+  const pl = placaFmt(d.placa);
+  const outros = lista.filter((v) => v.id !== ignorarId);
+  if (pl.length >= 7) { const v = outros.find((x) => x.placa === pl); if (v) return { v, motivo: `mesma placa (${pl})` }; }
+  const ano = String(d.anoMod || d.anoFab || '');
+  if (!ano || !d.modelo) return null;
+  const mk = slug(d.marca);
+  const v = outros.find((x) => String(x.anoMod || x.anoFab || '') === ano && (!mk || !x.marca || slug(x.marca) === mk) && mesmoModelo(x.modelo, d.modelo) && (x.tipo || 'carro') === (d.tipo || 'carro'));
+  return v ? { v, motivo: `${nomeV(v)} ${anoV(v)} já está cadastrado${v.status === 'vendido' ? ' (vendido)' : ''}` } : null;
 }
 
 async function carregar() {
@@ -329,8 +380,8 @@ function render(manterScroll) {
   }
   location.hash = '#/';
 }
-function topo(titulo, { voltar, sub, direita = '' } = {}) {
-  $('#top').innerHTML = `${voltar ? `<a class="icon-btn" href="${voltar}" aria-label="Voltar">${I.back}</a>` : ''}
+function topo(titulo, { voltar, sub, direita = '', logo = false } = {}) {
+  $('#top').innerHTML = `${voltar ? `<a class="icon-btn" href="${voltar}" aria-label="Voltar">${I.back}</a>` : ''}${logo && S.cfg.logo ? `<img class="logo-top" src="/${esc(S.cfg.logo)}" alt="">` : ''}
     <h1>${titulo}${sub ? `<span class="sub">${sub}</span>` : ''}</h1>${direita}`;
 }
 const tela = (html) => ($('#app').innerHTML = html);
@@ -353,12 +404,16 @@ function aplicarTema() {
 async function iniciar() {
   try { await DB.open(); } catch (e) { tela(`<div class="empty"><b>Não consegui abrir o banco do navegador</b>${esc(e.message)}</div>`); return; }
   const vLocal = await DB.get('kv', 'versao');
+  let aviso = '';
   if (vLocal === undefined) await importarDoCodigo();
   else if ((D.versao || 1) > vLocal) {
-    if (confirm(`Tem dados novos no código (versão ${D.versao}).\nCarregar agora? Suas fotos e vídeos do celular continuam salvos.`)) await importarDoCodigo();
-    else await DB.put('kv', D.versao, 'versao');
+    // Junta o que chegou no código com o que está no celular (não apaga nada do aparelho)
+    const r = await mesclarDoCodigo(vLocal);
+    aviso = `Atualizado: ${r.novos} veículo(s) novo(s)` + (r.pulados.length ? ` · ${r.pulados.length} já existiam (não duplicados)` : '');
   }
   await carregar();
+  if (S.cfg.modeloPadrao) S.modelo = S.cfg.modeloPadrao;
+  if (aviso) setTimeout(() => toast(aviso, 5000), 600);
   aplicarTema();
   navigator.storage?.persist?.().catch(() => {});
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('/sw.js').catch(() => {});

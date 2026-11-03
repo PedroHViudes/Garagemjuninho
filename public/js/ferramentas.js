@@ -245,7 +245,7 @@ A.fipeV = (el) => {
 };
 
 /* ---------------- AJUSTES ---------------- */
-rota(/^\/ajustes$/, async () => {
+rota(/^\/ajustes(?:\?(\w+))?$/, async (sec) => {
   const c = S.cfg;
   topo('Ajustes', { voltar: '#/' });
   const inp = (k, label, attrs = '') => `<label class="l">${label}<input class="i" name="${k}" value="${esc(c[k] ?? '')}" ${attrs}></label>`;
@@ -255,11 +255,20 @@ rota(/^\/ajustes$/, async () => {
       ${inp('nomeLoja', 'Nome da loja / página')}
       <div class="f2">${inp('vendedor', 'Seu nome')}${inp('whatsapp', 'WhatsApp (com DDD)', 'inputmode="tel" placeholder="43999998888"')}</div>
       ${inp('cidade', 'Cidade (aparece nos anúncios)')}
+      ${inp('slogan', 'Slogan (vai no card e nas mensagens)', 'placeholder="Revenda no particular • Não somos loja"')}
       <label class="l">Hashtags padrão (Instagram)<textarea class="i" name="hashtags" style="min-height:70px">${esc(c.hashtags || '')}</textarea></label>
       <div class="f2"><label class="l">Saldo inicial do caixa<input class="i" name="saldoInicial" inputmode="decimal" value="${fmtN(c.saldoInicial)}"></label>${inp('metaMargem', 'Meta de lucro (%)', 'inputmode="decimal"')}</div>
       <div class="f2">${inp('diasAlerta', 'Alerta: parado há (dias)', 'inputmode="numeric"')}${inp('diasSemPostar', 'Alerta: sem divulgar (dias)', 'inputmode="numeric"')}</div>
       <button class="btn pri block">${I.check} Salvar</button>
     </form>
+
+    <div id="sec-msg">${cardModelos()}</div>
+
+    <div class="card">
+      <h3>${I.ia} Inteligência artificial (Gemini)</h3>
+      <p class="muted" style="margin:0 0 10px">Lê a arte do veículo, cadastra em lote e escreve textos. A chave fica na Vercel (<b>GEMINI_API_KEY</b>), nunca no código.</p>
+      <div class="bgrid"><button class="btn" data-a="iaTeste">${I.check} Testar IA</button><a class="btn" href="#/lote">${I.layers} Cadastro em lote</a></div>
+    </div>
 
     <div class="card">
       <h3>Grupos e páginas <span class="r">${(c.grupos || []).length}</span></h3>
@@ -301,7 +310,7 @@ rota(/^\/ajustes$/, async () => {
       </div>
     </div>
     <a class="btn block danger" href="/sair">${I.lock} Sair (pedir senha de novo)</a>
-    <p class="muted center mt">Garagem · v1 · dados versão ${(await DB.get('kv', 'versao')) || 1}</p>
+    <p class="muted center mt">Garagem · v2 (IA) · dados versão ${(await DB.get('kv', 'versao')) || 1}</p>
   `);
   navigator.storage?.estimate?.().then((e) => { const el = $('#espaco'); if (el) el.textContent = (e.usage / 1048576).toFixed(0) + ' MB usados'; });
 
@@ -318,6 +327,7 @@ rota(/^\/ajustes$/, async () => {
   });
   $('#restZip').addEventListener('change', (e) => e.target.files[0] && restaurar(e.target.files[0]));
   $('#pacZip').addEventListener('change', (e) => e.target.files[0] && importarPacote(e.target.files[0]));
+  if (sec) setTimeout(() => $('#sec-' + sec)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
 }, 'inicio');
 
 A.delGrupo = async (el) => { if (!confirm('Remover grupo?')) return; S.cfg.grupos.splice(+el.dataset.i, 1); await salvarCfg(); render(true); };
