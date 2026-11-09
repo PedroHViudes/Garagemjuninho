@@ -123,7 +123,7 @@ function textoAnuncio(v, modelo = 'whatsapp') {
   const preco = num(v.precoAnuncio) ? brl(v.precoAnuncio) : 'Consulte';
   const zap = c.whatsapp ? fone(c.whatsapp) : '';
   const extras = [v.aceitaTroca && 'Aceito troca', v.financia && 'Financio'].filter(Boolean);
-  const L = (a) => a.filter((x) => x !== false && x !== null && x !== undefined).join('\n');
+  const L = (a) => a.filter((x) => x !== false && x !== null && x !== undefined && x !== 0).join('\n');
   if (modelo === 'whatsapp') return L([
     `${moto ? '🏍️' : '🚗'} *${tit.toUpperCase()}*`,
     ano && `📅 Ano: ${ano}`,
@@ -212,6 +212,7 @@ function tabDivulgar(v) {
         <button class="btn sm" data-a="salvarAdModelo">Virar modelo</button>
       </div>
       <button class="btn block mt ia-btn" data-a="iaTexto" data-id="${v.id}">${I.ia} Criar texto com IA (canal e tom)</button>
+      <a class="btn block mt" href="#/divulgar">${I.share} Divulgar o estoque todo de uma vez</a>
     </div>
 
     <div class="card">

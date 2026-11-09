@@ -48,6 +48,8 @@ rota(/^\/$/, () => {
 
     <div class="sec-t">Atalhos</div>
     <div class="tool-grid">
+      <a class="tool" href="#/divulgar?todos">${I.wa}<b>Exportar todos p/ WhatsApp</b><span>1 foto + a descrição de cada carro, tudo de uma vez</span></a>
+      <a class="tool" href="#/divulgar">${I.share}<b>Divulgar estoque</b><span>Escolher a foto e o texto de cada um</span></a>
       <a class="tool" href="#/lote">${I.ia}<b>Cadastrar em lote</b><span>A IA lê as artes e cadastra vários</span></a>
       <a class="tool" href="#/novo">${I.plus}<b>Novo com IA</b><span>Foto da arte preenche o cadastro</span></a>
       <a class="tool" data-a="escolherPlaca">${I.plate}<b>Consultar placa</b><span>Escolha o site ou app na hora</span></a>
@@ -82,7 +84,7 @@ A.metaAds = () => abrir('https://adsmanager.facebook.com/');
 
 /* ---------------- LISTA ---------------- */
 rota(/^\/veiculos$/, () => {
-  topo('Veículos', { sub: `${S.veiculos.filter((v) => v.status !== 'vendido').length} no estoque`, direita: `<a class="icon-btn" href="#/lote" aria-label="Cadastro em lote" title="Cadastro em lote">${I.layers}</a><a class="icon-btn" href="#/novo" aria-label="Novo">${I.plus}</a>` });
+  topo('Veículos', { sub: `${S.veiculos.filter((v) => v.status !== 'vendido').length} no estoque`, direita: `<a class="icon-btn" href="#/divulgar" aria-label="Divulgar estoque" title="Divulgar o estoque todo">${I.share}</a><a class="icon-btn" href="#/lote" aria-label="Cadastro em lote" title="Cadastro em lote">${I.layers}</a><a class="icon-btn" href="#/novo" aria-label="Novo">${I.plus}</a>` });
   const f = S.filtro;
   tela(`
     <div class="search"><input class="i" id="q" type="search" placeholder="Buscar modelo, placa, cor…" value="${esc(f.q)}" autocomplete="off"></div>
@@ -128,7 +130,7 @@ function formV(v0) {
   tela(`
   <form id="fv" class="f" autocomplete="off">
     ${novo ? `<div class="ia-box">
-      <label class="btn pri block">${I.ia} Preencher com IA (foto da arte)<input type="file" accept="image/*" class="hide" id="iaArte"></label>
+      <label class="btn pri block" id="iaArteBtn">${I.ia} Preencher com IA (foto da arte)<input type="file" accept="image/*" class="hide" id="iaArte"></label>
       <div id="iaRes"><p class="muted center" style="margin:6px 0 0">Tire ou escolha a imagem com as informações do veículo — a IA preenche tudo e escreve a legenda. Vários de uma vez? <a href="#/lote" style="color:var(--acc)">Cadastro em lote</a></p></div>
     </div>` : ''}
     <div class="seg" id="segTipo">

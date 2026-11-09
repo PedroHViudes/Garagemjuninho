@@ -55,3 +55,11 @@ Linha cujas variáveis estão todas vazias some sozinha (ex.: "🛣️ {km}" qua
 
 ## Atualizações do código sem perder nada
 Quando a `versao` do `dados.js` aumenta, o app **junta** os veículos novos do código com os do celular (não apaga nada e não duplica: pula o que já existir com a mesma placa ou marca+modelo+ano).
+
+## Novidades (v2.1)
+
+- **Animação da IA**: enquanto a IA lê a arte ou escreve um texto aparece a imagem sendo "escaneada", as etapas, a barra e os segundos. Dá para **Cancelar**.
+- **Erro 504 corrigido**: a IA agora usa modelos atuais do Gemini sem o modo "pensar" (bem mais rápido), corta uma tentativa travada e passa para outro modelo, e sempre responde antes da Vercel cortar. Se falhar, mostra o motivo em "Ver detalhes técnicos".
+- **Testar IA** (Ajustes): testa cada modelo, mostra qual funciona com a sua chave e o tempo de cada um, e passa a usar o mais rápido.
+- **Exportar todos p/ WhatsApp** (tela Início): um toque e o app monta 1 imagem por carro com a **descrição escrita na própria foto** (assim dá para mandar todos juntos sem misturar os textos). Depois é só tocar em Compartilhar (até 30 por vez), enviar um por um, ou baixar tudo em .zip.
+- **Divulgar estoque** (Início › Divulgar estoque, ou o botão de compartilhar em Veículos): escolha 1 imagem e 1 texto de cada veículo (ou um padrão para todos) e compartilhe **tudo junto** (até 30 por vez no WhatsApp) ou **um por um**.

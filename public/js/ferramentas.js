@@ -310,7 +310,7 @@ rota(/^\/ajustes(?:\?(\w+))?$/, async (sec) => {
       </div>
     </div>
     <a class="btn block danger" href="/sair">${I.lock} Sair (pedir senha de novo)</a>
-    <p class="muted center mt">Garagem · v2 (IA) · dados versão ${(await DB.get('kv', 'versao')) || 1}</p>
+    <p class="muted center mt">Garagem · v2.1 (IA) · dados versão ${(await DB.get('kv', 'versao')) || 1}</p>
   `);
   navigator.storage?.estimate?.().then((e) => { const el = $('#espaco'); if (el) el.textContent = (e.usage / 1048576).toFixed(0) + ' MB usados'; });
 

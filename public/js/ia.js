@@ -12,27 +12,76 @@ const lojaInfo = () => ({
   slogan: S.cfg.slogan || '', hashtagsLocais: S.cfg.hashtagsLocais || '',
 });
 const IA = {
-  async post(body) {
+  ctl: null,
+  async post(body, { limite = 125000 } = {}) {
+    const ctl = new AbortController(); this.ctl = ctl;
+    const tm = setTimeout(() => ctl.abort('tempo'), limite);
     let r;
-    try { r = await fetch('/api/ia', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...body, loja: lojaInfo() }) }); }
-    catch { throw new Error('Sem internet — a IA precisa de conexão'); }
+    try {
+      r = await fetch('/api/ia', { method: 'POST', headers: { 'content-type': 'application/json' }, signal: ctl.signal,
+        body: JSON.stringify({ ...body, modelo: S.cfg.iaModelo || '', loja: lojaInfo() }) });
+    } catch (e) {
+      clearTimeout(tm);
+      if (ctl.signal.aborted) throw erroIA(ctl.signal.reason === 'tempo' ? 'A IA demorou mais de 2 minutos e eu cancelei. Tente de novo; se repetir, vá em Ajustes › Testar IA.' : 'Cancelado', { cancelado: ctl.signal.reason !== 'tempo' });
+      throw erroIA(navigator.onLine === false ? 'Sem internet — a IA precisa de conexão' : 'Não consegui falar com o servidor da IA. Confira a internet e tente de novo.');
+    }
+    clearTimeout(tm);
     let d = null; try { d = await r.json(); } catch {}
-    if (!d) throw new Error(r.status === 401 ? 'Sessão expirada: abra o app e digite a senha de novo' : 'Servidor da IA não respondeu (' + r.status + ')');
-    if (!r.ok) throw new Error(d.erro || 'Erro ' + r.status);
+    if (!d) {
+      if (r.status === 401) throw erroIA('Sessão expirada: abra o app e digite a senha de novo');
+      if (r.status === 504) throw erroIA('A IA demorou demais e o servidor cortou (504). Esta versão já evita isso; se acontecer de novo, vá em Ajustes › Testar IA para ver o motivo.');
+      if (r.status === 404) throw erroIA('A função da IA não foi encontrada no site (404). Confira se a pasta api/ foi enviada ao GitHub.');
+      throw erroIA('Servidor da IA não respondeu (' + r.status + ')');
+    }
+    if (!r.ok) throw erroIA(d.erro || 'Erro ' + r.status, { tentativas: d.tentativas, resultados: d.resultados, info: d.info });
     return d;
   },
+  cancelar() { this.ctl?.abort('usuario'); },
   async lerArte(file) { const { b64, mime } = await imgBase64(file); return (await this.post({ acao: 'ler', imagem: b64, mime })).dados; },
   async texto(v, canal, tom, instrucao) { return (await this.post({ acao: 'texto', veiculo: resumoIA(v), canal, tom, instrucao })).texto; },
 };
+function erroIA(msg, extra = {}) { const e = new Error(msg); Object.assign(e, extra); return e; }
+// detalhes técnicos (o que cada modelo respondeu) para descobrir o motivo de uma falha
+function detalhesIA(e) {
+  const t = e?.tentativas || e?.resultados || [];
+  if (!t.length) return '';
+  return `<details class="ia-det"><summary>Ver detalhes técnicos</summary><ul>${t.map((x) => `<li><b>${esc(x.modelo)}</b> · ${esc(x.via)} · ${x.http ? 'HTTP ' + x.http + ' · ' : ''}${(x.ms / 1000).toFixed(1)} s${x.ok ? ' · ✅' : x.erro ? ' · ' + esc(x.erro) : ''}</li>`).join('')}</ul></details>`;
+}
 
-async function imgBase64(file, max = 1600) {
+/* ---------- animação enquanto a IA trabalha ---------- */
+const ETAPAS_LER = ['Enviando a arte…', 'Lendo o texto da imagem…', 'Identificando marca, modelo e ano…', 'Conferindo preço, km e opcionais…', 'Procurando pendências e condições…', 'Escrevendo a legenda do post…', 'Escrevendo o story…', 'Quase pronto…'];
+const ETAPAS_TEXTO = ['Lendo os dados do veículo…', 'Escolhendo as palavras…', 'Escrevendo o texto…', 'Ajustando hashtags e chamada…', 'Quase pronto…'];
+function iaLoader(box, { img = '', etapas = ETAPAS_LER, esperado = 20, cancelar = true } = {}) {
+  const t0 = Date.now();
+  box.innerHTML = `<div class="ia-load" role="status" aria-live="polite">
+      <div class="ia-scan">${img ? `<img src="${img}" alt="">` : `<div class="ia-orb">${I.ia}</div>`}<i class="ia-linha"></i><b class="ia-faisca">${I.ia}</b></div>
+      <div class="ia-info">
+        <div class="ia-etapa">${esc(etapas[0])}</div>
+        <div class="ia-barra"><i></i></div>
+        <div class="ia-tempo"><span>0 s</span>${cancelar ? '<button type="button" class="ia-cancel">Cancelar</button>' : ''}</div>
+      </div></div>`;
+  const etapa = $('.ia-etapa', box), barra = $('.ia-barra i', box), tempo = $('.ia-tempo span', box);
+  $('.ia-cancel', box)?.addEventListener('click', () => IA.cancelar());
+  let i = 0;
+  const tick = setInterval(() => {
+    const s = (Date.now() - t0) / 1000;
+    const p = 95 * (1 - Math.exp(-s / esperado));             // anda rápido no começo e desacelera, nunca chega a 100 antes da resposta
+    barra.style.width = p.toFixed(1) + '%';
+    tempo.textContent = Math.floor(s) + ' s' + (s > esperado * 2.5 ? ' · a IA está mais lenta agora, aguarde…' : '');
+    const ni = Math.min(etapas.length - 1, Math.floor(s / Math.max(2.5, esperado / etapas.length)));
+    if (ni !== i) { i = ni; etapa.classList.remove('in'); void etapa.offsetWidth; etapa.textContent = etapas[i]; etapa.classList.add('in'); }
+  }, 250);
+  return { parar() { clearInterval(tick); }, seg: () => (Date.now() - t0) / 1000 };
+}
+
+async function imgBase64(file, max = 1400) {
   let blob = file;
   try {
     const bmp = await createImageBitmap(file);
     const k = Math.min(1, max / Math.max(bmp.width, bmp.height));
     const c = document.createElement('canvas'); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
     c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
-    blob = (await new Promise((r) => c.toBlob(r, 'image/jpeg', 0.86))) || file;
+    blob = (await new Promise((r) => c.toBlob(r, 'image/jpeg', 0.84))) || file;
   } catch {}
   const b64 = await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(',')[1]); fr.onerror = rej; fr.readAsDataURL(blob); });
   return { b64, mime: blob.type || 'image/jpeg' };
@@ -73,9 +122,12 @@ document.addEventListener('change', async (e) => {
   if (!inp || !inp.files[0]) return;
   const f = inp.files[0]; inp.value = '';
   const box = $('#iaRes');
-  box.innerHTML = `<div class="ia-st">${I.ia}<div>Lendo a arte com IA…</div></div>`;
+  const url = URL.createObjectURL(f);
+  const ld = iaLoader(box, { img: url });
+  $('#iaArteBtn')?.classList.add('hide');
   try {
     const d = await IA.lerArte(f);
+    ld.parar();
     const v = dadosIAparaV(d);
     const form = $('#fv');
     const set = (n, val) => { const el = form.querySelector(`[name="${n}"]`); if (el && val !== undefined && val !== null && val !== '') el.value = val; };
@@ -92,8 +144,11 @@ document.addEventListener('change', async (e) => {
       ${dup ? `<div class="ia-st bad">${I.alert}<div>Possível duplicado: ${esc(dup.motivo)}. <a href="#/v/${dup.v.id}">ver</a></div></div>` : ''}
       ${(d.avisos || []).length ? `<div class="ia-st warn">${(d.avisos || []).map(esc).join('<br>')}</div>` : ''}`;
   } catch (err) {
-    box.innerHTML = `<div class="ia-st bad">${I.alert}<div>${esc(err.message)}</div></div>`;
+    ld.parar();
+    box.innerHTML = err.cancelado ? '' : `<div class="ia-st bad">${I.alert}<div>${esc(err.message)}${detalhesIA(err)}</div></div>`;
   }
+  URL.revokeObjectURL(url);
+  $('#iaArteBtn')?.classList.remove('hide');
 });
 
 /* ---------- 2) CADASTRO EM LOTE ---------- */
@@ -127,7 +182,7 @@ async function loteProcessar() {
   while (loteAtivos < 2) {
     const it = S.lote.find((x) => x.status === 'fila');
     if (!it) return;
-    loteAtivos++; it.status = 'lendo'; loteAtualizar(it);
+    loteAtivos++; it.status = 'lendo'; it.t0 = Date.now(); loteAtualizar(it); loteRelogio();
     (async () => {
       for (let tent = 0; tent < 4; tent++) {
         try {
@@ -135,7 +190,8 @@ async function loteProcessar() {
           it.dados = dadosIAparaV(d); it.avisos = d.avisos || []; it.confianca = d.confianca; it.status = 'ok'; it.erro = '';
           break;
         } catch (e) {
-          it.erro = e.message; it.status = 'erro';
+          it.erro = e.message; it.status = 'erro'; it.tentativas = e.tentativas || [];
+          if (/demor|504/i.test(e.message) && tent < 1) { it.status = 'lendo'; it.erro = 'A IA demorou — tentando de novo…'; it.t0 = Date.now(); loteAtualizar(it); await new Promise((r) => setTimeout(r, 3000)); continue; }
           if (/limite/i.test(e.message) && tent < 3) { const seg = 20 + tent * 15; it.status = 'lendo'; it.erro = `Limite da IA — tentando de novo em ${seg} s…`; loteAtualizar(it); await new Promise((r) => setTimeout(r, seg * 1000)); continue; }
           break;
         }
@@ -160,6 +216,16 @@ function loteChecarDup() {
     vistos.push(it);
   }
 }
+// relógio das linhas que a IA está lendo
+let loteTimer = 0;
+function loteRelogio() {
+  if (loteTimer) return;
+  loteTimer = setInterval(() => {
+    const lendo = S.lote.filter((x) => x.status === 'lendo');
+    if (!lendo.length) { clearInterval(loteTimer); loteTimer = 0; return; }
+    lendo.forEach((x) => { const el = $('#ll-' + x.id + ' .ia-seg'); if (el) el.textContent = Math.floor((Date.now() - x.t0) / 1000) + ' s'; });
+  }, 500);
+}
 function loteAtualizar(it) {
   if (!location.hash.startsWith('#/lote')) return;
   if (it) { const el = $('#ll-' + it.id); if (el) { el.outerHTML = linhaLote(it); return; } }
@@ -172,13 +238,13 @@ function linhaLote(it) {
   const inp = (k, lbl, val, attrs = '') => `<label class="l">${lbl}<input class="i" data-lf="${k}" data-id="${it.id}" value="${esc(val ?? '')}" ${attrs}></label>`;
   return `<div class="card lote ${it.incluir ? 'on' : ''}" id="ll-${it.id}">
     <div class="lote-top">
-      <img src="${it.url}" alt="">
+      ${it.status === 'lendo' ? `<div class="ia-scan mini"><img src="${it.url}" alt=""><i class="ia-linha"></i></div>` : `<img src="${it.url}" alt="">`}
       <div class="grow">
         ${it.status === 'ok' ? `<b>${esc([d.marca, d.modelo].filter(Boolean).join(' ') || 'Sem nome')}</b>
           <small>${esc([d.anoMod, d.km ? fmtKm(d.km) : '', num(d.precoAnuncio) ? brl(d.precoAnuncio) : 'sem preço'].filter(Boolean).join(' · '))}</small>
           ${it.dup ? `<span class="tag preju">⚠ ${esc(it.dup)}</span>` : '<span class="tag lucro">novo</span>'}
           ${it.confianca && it.confianca !== 'alta' ? `<span class="tag">confiança ${esc(it.confianca)}</span>` : ''}`
-        : `<b>${esc(it.file.name)}</b><small class="${it.status === 'erro' ? 'neg' : ''}">${esc(st)}</small>`}
+        : `<b>${esc(it.file.name)}</b><small class="${it.status === 'erro' ? 'neg' : ''}">${it.status === 'lendo' ? `<span class="ia-pontos">${esc(st)}</span> <span class="ia-seg">${Math.floor((Date.now() - (it.t0 || Date.now())) / 1000)} s</span>` : esc(st)}</small>${it.status === 'erro' ? detalhesIA(it) : ''}`}
       </div>
       ${it.status === 'ok' ? `<label class="sw" style="padding:0"><input type="checkbox" data-linc="${it.id}" ${it.incluir ? 'checked' : ''} aria-label="Incluir no cadastro"></label>` : ''}
       ${it.status === 'erro' ? `<button class="btn sm" data-a="loteRetry" data-id="${it.id}">${I.refresh}</button>` : ''}
@@ -342,6 +408,7 @@ A.iaTexto = (el) => {
       <div class="chips" style="flex-wrap:wrap" data-grp="tom">${chips('tom', [['direto', 'Direto'], ['emocional', 'Emocional'], ['urgencia', 'Urgência'], ['premium', 'Premium'], ['divertido', 'Divertido']])}</div>
       <label class="l">Pedido extra (opcional)<input class="i" id="iaInst" placeholder="Ex: destacar que é único dono, falar do preço abaixo da FIPE"></label>
       <button class="btn pri block" id="iaGo">${I.ia} Gerar texto</button>
+      <div id="iaLd"></div>
       <textarea class="i adtext hide" id="iaOut" rows="12"></textarea>
       <div class="bgrid hide" id="iaAcoes">
         <button class="btn" id="iaUsar">${I.check} Usar agora</button>
@@ -353,10 +420,13 @@ A.iaTexto = (el) => {
   const out = $('#iaOut', s);
   $('#iaGo', s).onclick = async () => {
     const b = $('#iaGo', s); b.disabled = true; b.innerHTML = `${I.ia} Escrevendo…`;
+    const lb = $('#iaLd', s); out.classList.add('hide'); $('#iaAcoes', s).classList.add('hide');
+    const ld = iaLoader(lb, { etapas: ETAPAS_TEXTO, esperado: 10 });
     try {
-      out.value = await IA.texto(v, o.canal, o.tom, $('#iaInst', s).value);
-      out.classList.remove('hide'); $('#iaAcoes', s).classList.remove('hide');
-    } catch (e) { toast(e.message, 5000); }
+      const t = await IA.texto(v, o.canal, o.tom, $('#iaInst', s).value);
+      ld.parar(); lb.innerHTML = '';
+      out.value = t; out.classList.remove('hide'); $('#iaAcoes', s).classList.remove('hide');
+    } catch (e) { ld.parar(); lb.innerHTML = e.cancelado ? '' : `<div class="ia-st bad">${I.alert}<div>${esc(e.message)}${detalhesIA(e)}</div></div>`; if (out.value) { out.classList.remove('hide'); $('#iaAcoes', s).classList.remove('hide'); } }
     b.disabled = false; b.innerHTML = `${I.ia} ${out.value ? 'Gerar outro' : 'Gerar texto'}`;
   };
   $('#iaUsar', s).onclick = () => { const t = out.value; fecharSheet(); const a = $('#adtext'); if (a) a.value = t; copiar(t, false); toast('Texto pronto e copiado ✓'); };
@@ -367,9 +437,19 @@ A.iaTexto = (el) => {
 A.iaOpt = (el) => { S.iaOpt[el.dataset.g] = el.dataset.k; el.parentNode.querySelectorAll('.chip').forEach((c) => c.classList.toggle('on', c === el)); };
 
 /* ---------- teste de conexão (Ajustes) ---------- */
-A.iaTeste = async (el) => {
-  el.disabled = true; const t = el.innerHTML; el.innerHTML = 'Testando…';
-  try { const d = await IA.post({ acao: 'teste' }); toast('IA funcionando ✓ (' + d.modelo + ')', 4000); }
-  catch (e) { alert('A IA não respondeu:\n' + e.message); }
-  el.disabled = false; el.innerHTML = t;
+A.iaTeste = async () => {
+  const s = sheet(`<h2>${I.ia} Testar IA<button class="icon-btn" data-a="fechar">${I.x}</button></h2><div id="iaDiag"></div>`);
+  const box = $('#iaDiag', s);
+  const ld = iaLoader(box, { etapas: ['Conectando ao servidor…', 'Testando a chave do Gemini…', 'Testando cada modelo…', 'Medindo a velocidade…'], esperado: 8, cancelar: false });
+  let d, erro;
+  try { d = await IA.post({ acao: 'teste' }, { limite: 60000 }); } catch (e) { erro = e; d = { resultados: e.resultados || [], info: e.info }; }
+  ld.parar();
+  const rs = (d.resultados || []).slice().sort((a, b) => (b.ok - a.ok) || a.ms - b.ms);
+  if (d.melhor) { S.cfg.iaModelo = d.melhor; await salvarCfg(); }
+  box.innerHTML = `
+    <div class="ia-st ${erro ? 'bad' : 'ok'}">${erro ? I.alert : I.check}<div>${erro ? esc(erro.message) : `IA funcionando ✓<br><small>Vou usar o mais rápido: <b>${esc(d.modelo)}</b></small>`}</div></div>
+    ${d.info ? `<div class="ia-st"><div><b>Chave:</b> ${esc(d.info.chave)}${d.info.espacos ? ' · <b>tinha espaço sobrando</b> (já ignoro)' : ''}${d.info.modeloEnv ? ` · GEMINI_MODEL = ${esc(d.info.modeloEnv)}` : ''}</div></div>` : ''}
+    ${rs.length ? `<div class="lines mt">${rs.map((r) => `<div class="line"><div class="grow"><b>${r.ok ? '✅' : '❌'} ${esc(r.modelo)}</b><small>${esc(r.via)} · ${(r.ms / 1000).toFixed(1)} s${r.http ? ' · HTTP ' + r.http : ''}${r.erro ? ' · ' + esc(r.erro) : ''}</small></div></div>`).join('')}</div>` : ''}
+    ${erro && !rs.length ? '' : '<p class="muted" style="margin:10px 0 0">❌ em alguns modelos é normal (nem toda chave tem todos). Basta um ✅.</p>'}
+    <button class="btn block mt" data-a="iaTeste">${I.refresh} Testar de novo</button>`;
 };
