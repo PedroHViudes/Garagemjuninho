@@ -26,7 +26,7 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--txt)}
 body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;font-size:15px;line-height:1.4;
-  padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px);min-height:100dvh;overscroll-behavior-y:contain}
+  padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px);min-height:100dvh}
 button,input,select,textarea{font:inherit;color:inherit}
 a{color:inherit}
 img,video{display:block;max-width:100%}
@@ -85,7 +85,7 @@ img,video{display:block;max-width:100%}
 .chips::-webkit-scrollbar{display:none}
 .chip{flex:none;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:7px 13px;font-size:13px;font-weight:600;cursor:pointer;color:var(--txt2)}
 .chip.on{background:var(--txt);color:var(--bg);border-color:var(--txt)}
-.vlist{display:grid;gap:10px}
+.vlist{display:grid;gap:10px;grid-template-columns:minmax(0,1fr)}
 .vitem{display:flex;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:10px;text-decoration:none;box-shadow:var(--sh);align-items:center}
 .thumb{width:96px;height:76px;border-radius:12px;background:var(--line2);flex:none;overflow:hidden;display:grid;place-items:center;color:var(--txt3);position:relative}
 .thumb img,.thumb video{width:100%;height:100%;object-fit:cover}
@@ -175,7 +175,7 @@ details.more summary{cursor:pointer;font-weight:700;color:var(--acc);font-size:1
 details.more summary::-webkit-details-marker{display:none}
 
 /* linhas tipo lista */
-.lines{display:grid}
+.lines{display:grid;grid-template-columns:minmax(0,1fr)}
 .line{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line2)}
 .line:last-child{border-bottom:0}
 .line .grow{flex:1;min-width:0}
@@ -214,7 +214,7 @@ details.more summary::-webkit-details-marker{display:none}
 
 /* folha/modal */
 .sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;display:flex;align-items:flex-end;justify-content:center;animation:fade .15s}
-.sheet{background:var(--bg);width:100%;max-width:720px;max-height:92dvh;overflow:auto;border-radius:22px 22px 0 0;padding:8px 16px calc(20px + env(safe-area-inset-bottom));animation:up .2s ease-out}
+.sheet{background:var(--bg);width:100%;max-width:720px;max-height:92dvh;overflow:auto;overscroll-behavior:contain;border-radius:22px 22px 0 0;padding:8px 16px calc(20px + env(safe-area-inset-bottom));animation:up .2s ease-out}
 .sheet .grab{width:40px;height:5px;border-radius:9px;background:var(--line);margin:4px auto 10px}
 .sheet h2{font-size:19px;margin:0 0 12px;display:flex;align-items:center;gap:8px}
 .sheet h2 .icon-btn{margin-left:auto;width:34px;height:34px}
@@ -255,7 +255,9 @@ hr.s{border:0;border-top:1px solid var(--line2);margin:12px 0}
 .sheet h2 > svg{width:20px;height:20px}
 .bgrid .btn,.btn.block{white-space:normal;text-align:center;min-width:0;line-height:1.2}
 div.l b{display:block}
-html,body{overflow-x:hidden}
+/* Rolagem no celular: NÃO usar overflow-x:hidden em html/body (no Chrome do Android isso,
+   junto com conteúdo mais largo que a tela, travava a rolagem). "clip" corta sem virar área de rolagem. */
+body{overflow-x:clip}
 .f2 > label.l{align-content:end}
 
 /* ---------- marca / IA / lote ---------- */
