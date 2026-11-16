@@ -63,3 +63,17 @@ Quando a `versao` do `dados.js` aumenta, o app **junta** os veículos novos do c
 - **Testar IA** (Ajustes): testa cada modelo, mostra qual funciona com a sua chave e o tempo de cada um, e passa a usar o mais rápido.
 - **Exportar todos p/ WhatsApp** (tela Início): um toque e o app monta 1 imagem por carro com a **descrição escrita na própria foto** (assim dá para mandar todos juntos sem misturar os textos). Depois é só tocar em Compartilhar (até 30 por vez), enviar um por um, ou baixar tudo em .zip.
 - **Divulgar estoque** (Início › Divulgar estoque, ou o botão de compartilhar em Veículos): escolha 1 imagem e 1 texto de cada veículo (ou um padrão para todos) e compartilhe **tudo junto** (até 30 por vez no WhatsApp) ou **um por um**.
+
+## Compartilhar no Android (v2.2)
+
+- O Chrome do Android só deixa compartilhar **logo depois do toque** e **até 10 arquivos por vez**. Antes, quando isso falhava o app baixava os arquivos; agora ele divide em partes de 10 e, se o toque "expirar", mostra o botão **Compartilhar agora**.
+- No WhatsApp, quando várias fotos vão juntas, **só a 1ª recebe legenda** (é do WhatsApp). Para cada foto ter a sua legenda use **Uma por vez** na janela de Divulgar: cada toque envia 1 foto + a legenda daquele carro e o botão já pula para o próximo.
+- Em **Todas juntas** você escolhe a legenda da 1ª foto (lista dos carros e preços, textos completos ou sem legenda); as outras levam a descrição escrita na própria imagem.
+
+## Link do veículo para o cliente (v2.3)
+
+- Na aba **Divulgar** de cada veículo: **Gerar link do veículo**. O cliente abre `/c/<veículo>` (sem senha) e vê **todas as fotos**, preço, ficha, opcionais e o botão **Chamar no WhatsApp** com o seu número principal (Ajustes › WhatsApp principal). A mensagem já vai com o nome do carro e o link.
+- A página **nunca** mostra custo, despesas, lucro ou placa. O resto do app continua com senha.
+- Quando você muda o preço ou marca como vendido, o link se atualiza sozinho.
+- O texto padrão do WhatsApp ganha a linha "📸 Todas as fotos: <link>" e os modelos de mensagem têm a variável **{link}**.
+- **Ativar o armazenamento das fotos (uma vez só):** Vercel › projeto › **Storage** › **Create** › **Blob** › conectar ao projeto (cria `BLOB_READ_WRITE_TOKEN`) › **Redeploy**. Sem isso, só os veículos que já estão no código (GitHub) têm link.

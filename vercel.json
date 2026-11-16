@@ -21,6 +21,19 @@
   "functions": {
     "api/ia.js": {
       "maxDuration": 120
+    },
+    "api/carro.js": {
+      "includeFiles": "public/dados.js",
+      "maxDuration": 15
+    },
+    "api/publicar.js": {
+      "maxDuration": 60
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/c/:id",
+      "destination": "/api/carro?id=:id"
+    }
+  ]
 }

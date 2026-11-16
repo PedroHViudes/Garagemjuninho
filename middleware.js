@@ -60,8 +60,13 @@ ${erro ? '<div class="err">Senha incorreta</div>' : ''}
   });
 }
 
+// Páginas abertas para o CLIENTE (sem senha): link do veículo e as fotos dele.
+// Só mostram dados de anúncio — custos, lucro e o app continuam protegidos.
+const PUBLICO = /^\/(c\/[a-z0-9-]+\/?$|api\/carro\/?$|midias\/|marca\/)/;
+
 export default async function middleware(request) {
   const url = new URL(request.url);
+  if (PUBLICO.test(url.pathname) && request.method === 'GET') return next();
   const senha = process.env.SENHA_APP;
 
   if (!senha) {
