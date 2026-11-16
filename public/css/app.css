@@ -345,4 +345,9 @@ a.chip{text-decoration:none;display:inline-flex;align-items:center;gap:3px}
 .dv-step .grow{min-width:0}.dv-step .grow b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dv-step .grow small{display:block;color:var(--txt3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #dvPrep .lines{grid-template-columns:minmax(0,1fr)}
-.sec-t .r{margin-left:auto;text-transform:none;letter-spacing:0}
+.sec-t .r{margin-left:auto;padding-left:10px;text-transform:none;letter-spacing:0}
+.btn.dv-seq{display:flex;align-items:center;gap:12px;justify-content:flex-start;text-align:left;padding:10px 14px;min-height:72px}
+.btn.dv-seq img{width:46px;height:56px;border-radius:8px;object-fit:cover;flex:none}
+.btn.dv-seq span{display:flex;flex-direction:column;min-width:0}
+.btn.dv-seq b{font-size:16px}.btn.dv-seq small{font-weight:600;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.link-url .i{font-size:13.5px;font-family:ui-monospace,Menlo,monospace;color:var(--txt2)}
