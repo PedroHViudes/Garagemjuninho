@@ -137,6 +137,7 @@ function textoAnuncio(v, modelo = 'whatsapp') {
     extras.length && `🤝 ${extras.join(' • ')}`,
     c.cidade && `📍 ${c.cidade}`,
     zap && `📲 Chama no WhatsApp: ${zap}`,
+    v.link?.url && `📸 Todas as fotos: ${v.link.url}`,
     c.slogan && `🏷️ ${c.nomeLoja ? c.nomeLoja + ' · ' : ''}${c.slogan}`,
   ]);
   if (modelo === 'instagram') {
@@ -195,6 +196,7 @@ function tabDivulgar(v) {
   const feitos = canais.filter((c) => v.postagens?.[c]).length;
   const ult = ultimaDiv(v);
   $('#tabc').innerHTML = `
+    ${cardLink(v)}
     <div class="card">
       <h3>${I.megaphone} Texto do anúncio</h3>
       <div class="seg mb">

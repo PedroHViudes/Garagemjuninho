@@ -253,7 +253,7 @@ rota(/^\/ajustes(?:\?(\w+))?$/, async (sec) => {
     <form class="card f" id="fcfg">
       <h3>Seus dados</h3>
       ${inp('nomeLoja', 'Nome da loja / página')}
-      <div class="f2">${inp('vendedor', 'Seu nome')}${inp('whatsapp', 'WhatsApp (com DDD)', 'inputmode="tel" placeholder="43999998888"')}</div>
+      <div class="f2">${inp('vendedor', 'Seu nome')}${inp('whatsapp', 'WhatsApp principal (com DDD)', 'inputmode="tel" placeholder="43999998888"')}</div>
       ${inp('cidade', 'Cidade (aparece nos anúncios)')}
       ${inp('slogan', 'Slogan (vai no card e nas mensagens)', 'placeholder="Revenda no particular • Não somos loja"')}
       <label class="l">Hashtags padrão (Instagram)<textarea class="i" name="hashtags" style="min-height:70px">${esc(c.hashtags || '')}</textarea></label>
@@ -263,6 +263,8 @@ rota(/^\/ajustes(?:\?(\w+))?$/, async (sec) => {
     </form>
 
     <div id="sec-msg">${cardModelos()}</div>
+
+    ${cardLinkAjustes()}
 
     <div class="card">
       <h3>${I.ia} Inteligência artificial (Gemini)</h3>

@@ -328,7 +328,7 @@ const VARS = [
   ['titulo', 'Marca e modelo'], ['ano', 'Ano'], ['km', 'KM'], ['preco', 'Preço'], ['opcionais', 'Opcionais (lista ✅)'], ['opcionais_linha', 'Opcionais (linha)'],
   ['descricao', 'Descrição'], ['condicoes', 'Troca/financia'], ['cor', 'Cor'], ['combustivel', 'Combustível'], ['cambio', 'Câmbio'],
   ['whatsapp', 'WhatsApp'], ['cidade', 'Cidade'], ['loja', 'Loja'], ['slogan', 'Slogan'], ['hashtags', 'Hashtags'], ['emoji', '🚗/🏍️'],
-  ['marca', 'Marca'], ['modelo', 'Modelo'], ['placa', 'Placa'], ['album', 'Link do álbum'],
+  ['marca', 'Marca'], ['modelo', 'Modelo'], ['placa', 'Placa'], ['album', 'Link do álbum'], ['link', 'Link do veículo (fotos)'],
 ];
 function varsDe(v) {
   const c = S.cfg, moto = v.tipo === 'moto';
@@ -340,7 +340,7 @@ function varsDe(v) {
     descricao: v.descricao || '', condicoes: [v.aceitaTroca && 'Aceito troca', v.financia && 'Financio'].filter(Boolean).join(' • '),
     cor: v.cor || '', combustivel: v.combustivel || '', cambio: v.cambio || '', whatsapp: c.whatsapp ? fone(c.whatsapp) : '', cidade: c.cidade || '',
     loja: c.nomeLoja || '', slogan: c.slogan || '', hashtags: [...new Set(tags.split(/\s+/).filter((t) => t.length > 1))].join(' '),
-    emoji: moto ? '🏍️' : '🚗', placa: v.placa || '', album: v.linkAlbum || '',
+    emoji: moto ? '🏍️' : '🚗', placa: v.placa || '', album: v.linkAlbum || '', link: v.link?.url || '',
   };
 }
 // troca {variavel}; linha em que TODAS as variáveis estão vazias some sozinha (ex: "🛣️ {km}" sem km)

@@ -5,7 +5,7 @@
    tudo junto (WhatsApp, Instagram…) ou um por um.
    ============================================================= */
 S.dv = { sel: null, img: {}, txt: {}, edit: {}, filtro: 'disponiveis' };
-const DV_MAX = 30;   // o WhatsApp aceita até 30 arquivos por envio
+const DV_MAX = MAX_ARQ_SHARE;   // Chrome do Android: até 10 arquivos por vez (iPhone: 30)
 
 function dvLista() {
   const f = S.dv.filtro;
@@ -132,57 +132,104 @@ A.dvPreparar = async () => {
   const itens = [];
   for (let i = 0; i < vs.length; i++) {
     const v = vs[i], esc_ = dvImg(v);
-    let file = null;
+    let file = null, limpa = null;   // file = como vai "todas juntas"; limpa = foto sem texto escrito (uma por vez)
     try {
       const naFoto = S.cfg.dvNaFoto !== false;
       const nome = `${String(i + 1).padStart(2, '0')}-${slug(nomeV(v))}`;
       if (esc_ === 'card') {
         const card = await gerarCard(v, false);
-        if (naFoto) { const u = URL.createObjectURL(card); try { file = new File([await fotoComTexto(v, { src: u }, dvTexto(v), false)], `${nome}-card.jpg`, { type: 'image/jpeg' }); } finally { URL.revokeObjectURL(u); } }
-        else file = new File([card], `${nome}-card.jpg`, { type: 'image/jpeg' });
-      } else if (naFoto) { const b = await fotoComTexto(v, dvFotos(v).find((x) => x.id === esc_), dvTexto(v)); file = new File([b], `${nome}.jpg`, { type: 'image/jpeg' }); }
-      else { const m = dvFotos(v).find((x) => x.id === esc_); const [f] = await arquivosDe([m]); if (f) file = new File([f], `${String(i + 1).padStart(2, '0')}-${slug(nomeV(v))}.${(f.name.split('.').pop() || 'jpg').toLowerCase()}`, { type: f.type || 'image/jpeg' }); }
+        limpa = new File([card], `${nome}-card.jpg`, { type: 'image/jpeg' });
+        if (naFoto) { const u = URL.createObjectURL(card); try { file = new File([await fotoComTexto(v, { src: u }, dvTexto(v), false)], `${nome}-card-texto.jpg`, { type: 'image/jpeg' }); } finally { URL.revokeObjectURL(u); } }
+        else file = limpa;
+      } else {
+        const m = dvFotos(v).find((x) => x.id === esc_);
+        const [f] = await arquivosDe([m]);
+        if (f) limpa = new File([f], `${nome}.${(f.name.split('.').pop() || 'jpg').toLowerCase()}`, { type: f.type || 'image/jpeg' });
+        if (naFoto) { const b = await fotoComTexto(v, m, dvTexto(v)); file = new File([b], `${nome}-texto.jpg`, { type: 'image/jpeg' }); }
+        else file = limpa;
+      }
     } catch (e) { console.warn(e); }
-    itens.push({ v, file, texto: dvTexto(v), feito: false });
+    itens.push({ v, file, limpa: limpa || file, texto: dvTexto(v), feito: false });
     if (!$('#dvPrep')) return;          // fechou a janela
     $('.ia-barra i', box).style.width = ((i + 1) / vs.length * 100).toFixed(0) + '%';
     $('.ia-tempo span', box).textContent = `${i + 1} de ${vs.length}`;
     $('.ia-etapa', box).textContent = 'Preparando ' + nomeV(v) + '…';
   }
-  (S.dvItens || []).forEach((x) => x.url && URL.revokeObjectURL(x.url));
+  (S.dvItens || []).forEach((x) => { x.url && URL.revokeObjectURL(x.url); x.urls?.forEach((u) => URL.revokeObjectURL(u)); });
   S.dvItens = itens;
   dvTelaPronto(box);
 };
 function dvTelaPronto(box) {
   const it = S.dvItens, partes = [];
   for (let i = 0; i < it.length; i += DV_MAX) partes.push([i, Math.min(it.length, i + DV_MAX)]);
-  const semImg = it.filter((x) => !x.file).length;
-  const prox = it.findIndex((x) => !x.feito);
+  const semImg = it.filter((x) => !x.file).length, feitos = it.filter((x) => x.feito).length;
+  const prox = it.findIndex((x) => !x.feito), naFoto = S.cfg.dvNaFoto !== false, leg = S.cfg.dvLegJunto || 'lista';
   box.innerHTML = `
     <div class="ia-st ok">${I.check}<div>Pronto! ${it.length - semImg} imagem(ns) e ${it.length} texto(s).${semImg ? ` <small>${semImg} sem imagem (vai só o texto).</small>` : ''}</div></div>
-    <div class="sec-t" style="margin-top:14px">Tudo junto</div>
-    <div class="bgrid${partes.length > 1 ? '' : ' one'}">${partes.map(([a, b], k) => `<button class="btn pri" data-a="dvJunto" data-a0="${a}" data-b0="${b}">${I.share} ${partes.length > 1 ? `Parte ${k + 1} (${a + 1}–${b})` : `Compartilhar ${b} de uma vez`}</button>`).join('')}</div>
-    <p class="muted" style="margin:6px 0 0">${S.cfg.dvNaFoto !== false ? 'Cada foto já leva a descrição do carro escrita nela.' : 'Vai com todas as imagens e os textos juntos.'} Os textos também ficam copiados — é só colar. ${partes.length > 1 ? `O WhatsApp aceita até ${DV_MAX} por vez.` : ''}</p>
+    <div class="ia-st warn">No WhatsApp, quando várias fotos vão <b>juntas</b>, só a 1ª recebe legenda. Para <b>cada foto com a sua legenda</b>, use “Uma por vez”.</div>
+
+    <div class="sec-t" style="margin-top:14px">Uma por vez · cada foto com a sua legenda <span class="r">${feitos}/${it.length}</span></div>
+    <div class="prog"><i style="width:${(feitos / it.length) * 100}%"></i></div>
+    <div class="chips" style="flex-wrap:wrap;margin-top:6px">${[['limpa', 'Foto + legenda'], ['texto', 'Foto com a descrição escrita + legenda']].map(([k, t]) => `<button class="chip ${dvSeqFoto() === k ? 'on' : ''}" data-a="dvSeqFoto" data-k="${k}">${t}</button>`).join('')}</div>
+    ${prox >= 0 ? `<button class="btn pri block dv-seq" data-a="dvSeq">${dvArqSeq(it[prox]) ? `<img src="${urlDe(it[prox], dvArqSeq(it[prox]))}" alt="">` : I.share}
+        <span><b>Enviar ${prox + 1} de ${it.length}</b><small>${esc(nomeV(it[prox].v))}</small></span></button>
+      <p class="muted" style="margin:6px 0 0">Toque, escolha o contato/grupo/status no WhatsApp, volte para o app e toque de novo. O botão já vai para o próximo carro.</p>`
+      : `<div class="ia-st ok">${I.check}<div>Todos enviados! <a href="#" data-a="dvRecomecar">Recomeçar</a></div></div>`}
+
+    <div class="sec-t" style="margin-top:16px">Todas juntas</div>
+    <div class="muted">Legenda da 1ª foto:</div>
+    <div class="chips" style="flex-wrap:wrap">${[['lista', 'Lista dos carros e preços'], ['completo', 'Textos completos'], ['nada', 'Sem legenda']].map(([k, t]) => `<button class="chip ${leg === k ? 'on' : ''}" data-a="dvLeg" data-k="${k}">${t}</button>`).join('')}</div>
+    <p class="muted" style="margin:0 0 8px">${naFoto ? 'As outras fotos levam a descrição escrita na própria imagem.' : 'As outras fotos vão sem legenda (ligue “Escrever a descrição na foto” na tela anterior para cada uma levar o seu texto).'}${partes.length > 1 ? ` O ${ehAndroid ? 'Android' : 'celular'} aceita até ${DV_MAX} por vez.` : ''}</p>
+    <div class="bgrid${partes.length > 1 ? '' : ' one'}">${partes.map(([a, b], k) => `<button class="btn" data-a="dvJunto" data-a0="${a}" data-b0="${b}">${I.share} ${partes.length > 1 ? `Parte ${k + 1} (${a + 1}–${b})` : `Enviar as ${b} juntas`}</button>`).join('')}</div>
     <button class="btn block mt" data-a="dvZip">${I.download || I.image} Baixar tudo (.zip com fotos e textos)</button>
-    <div class="sec-t" style="margin-top:14px">Ou um por um <span class="r">${it.filter((x) => x.feito).length}/${it.length}</span></div>
+
+    <div class="sec-t" style="margin-top:16px">Escolher qual enviar</div>
     <div class="lines">${it.map((x, i) => `<div class="line dv-step ${x.feito ? 'feito' : ''} ${i === prox ? 'prox' : ''}">
       ${x.file ? `<img src="${x.url ||= URL.createObjectURL(x.file)}" alt="">` : `<span class="dv-noimg">${x.v.tipo === 'moto' ? I.moto : I.car}</span>`}
-      <div class="grow"><b>${esc(nomeV(x.v))}</b><small>${x.feito ? '✓ compartilhado' : esc(x.texto.split('\n')[0].slice(0, 50))}</small></div>
-      <button class="btn sm ${i === prox ? 'pri' : ''}" data-a="dvUm" data-i="${i}">${x.feito ? 'De novo' : `${I.share} Enviar`}</button></div>`).join('')}</div>`;
+      <div class="grow"><b>${esc(nomeV(x.v))}</b><small>${x.feito ? '✓ enviado' : esc(x.texto.split('\n')[0].slice(0, 50))}</small></div>
+      <button class="btn sm" data-a="dvUm" data-i="${i}">${x.feito ? 'De novo' : `${I.share} Enviar`}</button></div>`).join('')}</div>`;
 }
+const dvSeqFoto = () => S.cfg.dvSeqFoto || 'limpa';
+const dvArqSeq = (x) => (dvSeqFoto() === 'limpa' ? x.limpa : x.file) || x.file || x.limpa;
+function urlDe(x, f) { x.urls ||= new Map(); if (!x.urls.has(f)) x.urls.set(f, URL.createObjectURL(f)); return x.urls.get(f); }
+A.dvSeqFoto = async (el) => { S.cfg.dvSeqFoto = el.dataset.k; await salvarCfg(); dvRedesenhar(); };
 async function dvMarcar(itens) { for (const x of itens) { x.feito = true; x.v.ultimaDivulgacao = hoje(); await salvarV(x.v); } }
+// os arquivos já estão prontos: chama o compartilhar na hora do toque (exigência do Chrome no Android)
+async function dvShare(files, text, title) {
+  files = files.filter(Boolean);
+  if (!podeCompartilhar(files)) return compartilhar({ files, text, title });   // computador: baixa
+  const r = await shareJa(files, text, title);
+  if (r === 'toque') toast('Toque de novo no botão para abrir o compartilhar', 3500);
+  else if (r === 'erro') toast('O celular recusou o envio. Tente de novo ou use “Baixar tudo”.', 4000);
+  return r === 'ok';
+}
+const dvResumo = (it) => [S.cfg.nomeLoja ? `🚗 ${S.cfg.nomeLoja} — estoque` : '🚗 Estoque', '',
+  ...it.map((x) => `${x.v.tipo === 'moto' ? '🏍️' : '🚗'} ${nomeV(x.v)} ${anoV(x.v)} — ${num(x.v.precoAnuncio) ? brl(x.v.precoAnuncio) : 'consulte'}`),
+  ...(S.cfg.whatsapp ? ['', `📲 ${fone(S.cfg.whatsapp)}`] : [])].join('\n');
+const dvRedesenhar = () => { const box = $('#dvPrep'); if (box) dvTelaPronto(box); };
+A.dvLeg = async (el) => { S.cfg.dvLegJunto = el.dataset.k; await salvarCfg(); dvRedesenhar(); };
 A.dvJunto = async (el) => {
-  const it = S.dvItens.slice(+el.dataset.a0, +el.dataset.b0);
-  const ok = await compartilhar({ files: it.map((x) => x.file).filter(Boolean), text: it.map((x) => x.texto).join(DV_SEP), title: S.cfg.nomeLoja || 'Estoque' });
-  if (ok) { await dvMarcar(it); toast('Textos copiados — cole na legenda ✓', 3500); }
-  const box = $('#dvPrep'); if (box) dvTelaPronto(box);
+  const it = S.dvItens.slice(+el.dataset.a0, +el.dataset.b0), leg = S.cfg.dvLegJunto || 'lista';
+  const text = leg === 'nada' ? '' : leg === 'completo' ? it.map((x) => x.texto).join(DV_SEP) : dvResumo(it);
+  const ok = await dvShare(it.map((x) => x.file), text, S.cfg.nomeLoja || 'Estoque');
+  if (ok) { await dvMarcar(it); toast('Enviado ✓', 2500); }
+  dvRedesenhar();
+};
+A.dvSeq = async () => {
+  const i = S.dvItens.findIndex((x) => !x.feito); if (i < 0) return;
+  const x = S.dvItens[i];
+  const f = dvArqSeq(x);
+  const ok = await dvShare(f ? [f] : [], x.texto, nomeV(x.v));
+  if (ok) { await dvMarcar([x]); toast(`${i + 1} de ${S.dvItens.length} enviado ✓`, 2000); }
+  dvRedesenhar();
 };
 A.dvUm = async (el) => {
-  const x = S.dvItens[+el.dataset.i];
-  const ok = await compartilhar({ files: x.file ? [x.file] : [], text: x.texto, title: nomeV(x.v) });
-  if (ok) { await dvMarcar([x]); toast('Texto copiado ✓ — toque no próximo', 2500); }
-  const box = $('#dvPrep'); if (box) dvTelaPronto(box);
+  const x = S.dvItens[+el.dataset.i], f = dvArqSeq(x);
+  const ok = await dvShare(f ? [f] : [], x.texto, nomeV(x.v));
+  if (ok) { await dvMarcar([x]); toast('Enviado ✓', 2000); }
+  dvRedesenhar();
 };
+A.dvRecomecar = () => { S.dvItens.forEach((x) => { x.feito = false; }); dvRedesenhar(); };
 
 // baixa um .zip com as imagens e um textos.txt (bom para WhatsApp Web no computador)
 A.dvZip = async () => {

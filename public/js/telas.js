@@ -6,8 +6,7 @@
 /* ---------------- INÍCIO ---------------- */
 rota(/^\/$/, () => {
   const r = resumo();
-  const nome = S.cfg.vendedor || 'Pedro';
-  topo(`Olá, ${esc(nome)}`, { logo: true, sub: esc(S.cfg.nomeLoja || 'Garagem'), direita: `<a class="icon-btn" href="#/ajustes" aria-label="Ajustes">${I.gear}</a>` });
+  topo('Seja bem-vindo', { logo: true, sub: esc(S.cfg.nomeLoja || 'Garagem'), direita: `<a class="icon-btn" href="#/ajustes" aria-label="Ajustes">${I.gear}</a>` });
 
   const alertas = [];
   const dA = num(S.cfg.diasAlerta) || 30, dP = num(S.cfg.diasSemPostar) || 5;

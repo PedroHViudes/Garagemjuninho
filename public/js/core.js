@@ -305,14 +305,12 @@ async function delMidia(id) {
 }
 
 async function arquivosDe(ms) {
-  const out = [];
-  for (const m of ms) {
-    if (m.local) out.push(new File([m.blob], m.nome || m.id, { type: m.mime || m.blob.type }));
-    else {
-      try { const b = await (await fetch(m.src)).blob(); out.push(new File([b], m.nome, { type: b.type })); } catch {}
-    }
-  }
-  return out;
+  // busca tudo ao mesmo tempo (mais rápido = menos chance do toque "expirar" no Android)
+  const out = await Promise.all(ms.map(async (m) => {
+    if (m.local) return new File([m.blob], m.nome || m.id, { type: m.mime || m.blob.type });
+    try { const b = await (await fetch(m.src)).blob(); return new File([b], m.nome, { type: b.type }); } catch { return null; }
+  }));
+  return out.filter(Boolean);
 }
 
 /* ---------- interação ---------- */
@@ -332,16 +330,59 @@ function baixar(blob, nome) {
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nome;
   document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
 }
+/* ---------- compartilhar (WhatsApp, Instagram…) ----------
+   Regras do Chrome no Android (código do Chromium, ShareServiceImpl.java):
+   - o compartilhamento precisa acontecer LOGO após o toque (nada de "await" antes);
+   - no máximo 10 arquivos por vez.
+   Se o toque "expirou" (ex.: demorou para preparar as fotos), mostramos um botão
+   "Compartilhar agora" em vez de baixar os arquivos. Baixar só no computador. */
+const ehAndroid = /Android/i.test(navigator.userAgent);
+const MAX_ARQ_SHARE = ehAndroid ? 10 : 30;
+function copiarJa(txt) {        // cópia síncrona: não gasta o "toque" que o compartilhar precisa
+  const ta = document.createElement('textarea'); ta.value = txt; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+  document.body.appendChild(ta); ta.select(); let ok = false; try { ok = document.execCommand('copy'); } catch {} ta.remove();
+  if (!ok) navigator.clipboard?.writeText(txt).catch(() => {});
+}
+function podeCompartilhar(files) {
+  if (!navigator.share) return false;
+  if (!files.length) return true;
+  try { return !!navigator.canShare && navigator.canShare({ files }); } catch { return false; }
+}
+// chama o navigator.share na hora (sem await antes). Devolve 'ok' | 'cancelou' | 'toque' (precisa de novo toque) | 'erro'
+async function shareJa(files, text, title) {
+  if (text) copiarJa(text);
+  try { await navigator.share({ ...(files.length ? { files } : {}), ...(text ? { text } : {}), ...(title ? { title } : {}) }); return 'ok'; }
+  catch (e) { if (e.name === 'AbortError') return 'cancelou'; console.warn('share:', e.name, e.message); return e.name === 'NotAllowedError' ? 'toque' : 'erro'; }
+}
+// janela com botão(ões) "Compartilhar agora": cada toque é um gesto novo
+function pedirToque({ files, text, title }) {
+  return new Promise((resolve) => {
+    const partes = [];
+    for (let i = 0; i < Math.max(1, files.length); i += MAX_ARQ_SHARE) partes.push(files.slice(i, i + MAX_ARQ_SHARE));
+    const s = sheet(`<h2>${I.share} Pronto para enviar<button class="icon-btn" data-a="fechar">${I.x}</button></h2>
+      <p class="muted" style="margin:0 0 10px">${partes.length > 1 ? `São ${files.length} arquivos e o Android aceita até ${MAX_ARQ_SHARE} por vez. Toque em cada parte:` : 'Toque para abrir o compartilhar:'}</p>
+      <div class="f" id="pqPartes">${partes.map((p, k) => `<button class="btn pri block" data-k="${k}">${I.share} ${partes.length > 1 ? `Parte ${k + 1} (${k * MAX_ARQ_SHARE + 1}–${k * MAX_ARQ_SHARE + p.length})` : 'Compartilhar agora'}</button>`).join('')}</div>`);
+    let algum = false;
+    s.querySelectorAll('#pqPartes button').forEach((b) => b.addEventListener('click', async () => {
+      const r = await shareJa(partes[+b.dataset.k], text, title);
+      if (r === 'ok') { algum = true; b.classList.remove('pri'); b.innerHTML = `${I.check} ${b.textContent.trim()} · enviado`; if (partes.length === 1) { fecharSheet(); resolve(true); } }
+      else if (r === 'erro') { toast('O celular recusou estes arquivos. Tente “um por um”.', 4000); }
+    }));
+    const obs = new MutationObserver(() => { if (!document.body.contains(s)) { obs.disconnect(); resolve(algum); } });
+    obs.observe(document.body, { childList: true });
+  });
+}
 async function compartilhar({ files = [], text = '', title = '' }) {
-  if (text) await copiar(text, false);
-  try {
-    if (files.length && navigator.canShare && navigator.canShare({ files })) {
-      await navigator.share({ files, text: text || undefined, title: title || undefined });
-      return true;
-    }
-    if (!files.length && navigator.share) { await navigator.share({ text, title }); return true; }
-  } catch (e) { if (e.name === 'AbortError') return false; console.warn(e); }
-  // Sem suporte (computador): baixa os arquivos
+  files = files.filter(Boolean);
+  if (podeCompartilhar(files)) {
+    if (files.length > MAX_ARQ_SHARE) { if (text) copiarJa(text); return pedirToque({ files, text, title }); }
+    const r = await shareJa(files, text, title);
+    if (r === 'ok') return true;
+    if (r === 'cancelou') return false;
+    if (r === 'toque') return pedirToque({ files, text, title });   // toque expirou: pede outro toque
+  }
+  // Sem suporte (computador) ou recusado: baixa os arquivos
+  if (text) copiarJa(text);
   files.forEach((f) => baixar(f, f.name));
   toast(files.length ? 'Arquivos baixados · texto copiado' : 'Texto copiado ✓');
   return false;
