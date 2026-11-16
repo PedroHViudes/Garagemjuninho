@@ -1,0 +1,39 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "",
+  "outputDirectory": "public",
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
+      ]
+    }
+  ],
+  "functions": {
+    "api/ia.js": {
+      "maxDuration": 120
+    },
+    "api/carro.js": {
+      "includeFiles": "public/dados.js",
+      "maxDuration": 15
+    },
+    "api/publicar.js": {
+      "maxDuration": 60
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/c/:id",
+      "destination": "/api/carro?id=:id"
+    }
+  ]
+}
